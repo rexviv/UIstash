@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "UIstash",
+  "description": "Capture, version, search, and organize great web pages locally.",
+  "version": "0.1.0",
+  "permissions": ["storage", "tabs", "downloads", "pageCapture", "offscreen", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "UIstash",
+    "default_popup": "popup.html"
+  },
+  "options_page": "dashboard.html"
+}

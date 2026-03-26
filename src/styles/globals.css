@@ -1,0 +1,31 @@
+﻿@import "tailwindcss";
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at top left, rgba(234, 225, 215, 0.65), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(245, 244, 239, 0.95), transparent 24%),
+      linear-gradient(180deg, #fbf9f5 0%, #f4eee5 100%);
+    color: #30332e;
+    font-family: "Segoe UI Variable Text", "Avenir Next", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}
