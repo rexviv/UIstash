@@ -1,31 +1,96 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @layer base {
-  * {
-    box-sizing: border-box;
+  :root {
+    /* Backgrounds — warm off-white, never pure white */
+    --bg-base:       #f7f5f2;
+    --bg-subtle:     #f2f0ec;
+    --bg-elevated:   #ffffff;
+    --bg-sunken:     #eeece8;
+
+    /* Ink — warm near-black hierarchy */
+    --ink-primary:   #1a1916;
+    --ink-secondary: #5c5952;
+    --ink-tertiary:  #9a9590;
+    --ink-ghost:     #c8c4be;
+
+    /* Borders — barely-there lines */
+    --border-default: rgba(26, 25, 22, 0.08);
+    --border-subtle:  rgba(26, 25, 22, 0.04);
+    --border-strong:  rgba(26, 25, 22, 0.14);
+
+    /* Accent — restrained warm amber */
+    --accent:        #c4a882;
+    --accent-soft:   rgba(196, 168, 130, 0.12);
+    --accent-hover:  #b39670;
+
+    /* Semantic */
+    --danger:        #b44a3a;
+    --danger-soft:   rgba(180, 74, 58, 0.08);
+    --success:       #4a7c5a;
+    --success-soft:  rgba(74, 124, 90, 0.1);
+
+    /* Shadows — very soft, warm-tinted */
+    --shadow-sm:  0 1px 3px rgba(26, 25, 22, 0.04);
+    --shadow-md:  0 4px 16px rgba(26, 25, 22, 0.06);
+    --shadow-lg:  0 12px 40px rgba(26, 25, 22, 0.08);
+
+    /* Radius */
+    --radius-sm:  8px;
+    --radius-md:  12px;
+    --radius-lg:  16px;
   }
 
-  html,
-  body,
-  #root {
+  * { box-sizing: border-box; }
+
+  html, body, #root {
     min-height: 100%;
+    height: 100%;
   }
 
   body {
     margin: 0;
-    background:
-      radial-gradient(circle at top left, rgba(234, 225, 215, 0.65), transparent 28%),
-      radial-gradient(circle at bottom right, rgba(245, 244, 239, 0.95), transparent 24%),
-      linear-gradient(180deg, #fbf9f5 0%, #f4eee5 100%);
-    color: #30332e;
-    font-family: "Segoe UI Variable Text", "Avenir Next", "Segoe UI", sans-serif;
+    background: var(--bg-base);
+    color: var(--ink-primary);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "liga" 1, "kern" 1;
   }
 
-  button,
-  input,
-  textarea {
+  button, input, textarea, select {
     font: inherit;
+    color: inherit;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar — thin, neutral */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(26, 25, 22, 0.12);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(26, 25, 22, 0.2);
   }
 }

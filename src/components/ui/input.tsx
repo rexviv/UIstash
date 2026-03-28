@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { cn } from "../../lib/utils";
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
@@ -7,7 +7,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        "flex h-11 w-full min-w-0 rounded-xl border border-[#ddd6cc] bg-[#faf6ef] px-4 py-2 text-sm text-[#30332e] shadow-sm transition-[color,box-shadow,border-color] outline-none placeholder:text-[#9a9388] focus-visible:border-[#cfc3b3] focus-visible:ring-2 focus-visible:ring-[#8e8477]/20",
+        "flex h-[38px] w-full rounded-[8px] border border-[var(--border-default)] bg-[var(--bg-sunken)] px-4 text-[13px] text-[var(--ink-primary)] transition-all duration-150 ease-out placeholder:text-[var(--ink-ghost)] focus:border-[var(--border-strong)] focus:bg-[var(--bg-elevated)] focus:outline-none focus:ring-[3px] focus:ring-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
