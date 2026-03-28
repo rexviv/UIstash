@@ -1,8 +1,16 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { cn } from "../../lib/utils";
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("rounded-2xl border border-[#ddd6cc] bg-white/80 shadow-[0_18px_40px_rgba(82,62,38,0.08)] backdrop-blur", className)} {...props} />;
+  return (
+    <div
+      className={cn(
+        "rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-[var(--shadow-sm)]",
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
@@ -10,11 +18,11 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("text-lg font-semibold tracking-[-0.02em] text-[#635e56]", className)} {...props} />;
+  return <div className={cn("text-[15px] font-semibold tracking-[-0.02em] text-[var(--ink-primary)]", className)} {...props} />;
 }
 
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("text-sm leading-6 text-[#6d675e]", className)} {...props} />;
+  return <div className={cn("text-[13px] leading-6 text-[var(--ink-tertiary)]", className)} {...props} />;
 }
 
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
@@ -26,4 +34,3 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
-

@@ -1,16 +1,17 @@
-﻿import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#8e8477]/30",
+  "inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors duration-150",
   {
     variants: {
       variant: {
-        default: "border-[#d9cfbf] bg-[#f0e8dc] text-[#635e56]",
-        secondary: "border-[#e1ddd5] bg-[#f8f5ef] text-[#6b655d]",
-        outline: "border-[#d8d1c7] bg-white/70 text-[#6b655d]",
-        success: "border-[#cce2d7] bg-[#edf7f1] text-[#2f7b5b]"
+        default: "px-2.5 py-1 rounded-[20px] bg-[var(--bg-sunken)] text-[var(--ink-secondary)] border border-[var(--border-default)]",
+        secondary: "px-2.5 py-1 rounded-[20px] bg-[var(--bg-sunken)] text-[var(--ink-tertiary)] border border-[var(--border-subtle)]",
+        accent: "px-2.5 py-1 rounded-[20px] bg-[var(--accent-soft)] text-[var(--ink-primary)] border border-[rgba(196,168,130,0.2)]",
+        success: "px-2.5 py-1 rounded-[20px] bg-[var(--success-soft)] text-[var(--success)] border border-[rgba(74,124,90,0.15)]",
+        danger: "px-2.5 py-1 rounded-[20px] bg-[var(--danger-soft)] text-[var(--danger)] border border-[rgba(180,74,58,0.15)]"
       }
     },
     defaultVariants: {

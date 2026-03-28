@@ -1,4 +1,4 @@
-﻿import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   Archive,
   ExternalLink,
@@ -10,7 +10,11 @@ import {
   Trash2,
   FileText,
   GalleryVerticalEnd,
-  MoreHorizontal
+  MoreHorizontal,
+  Library,
+  NotebookPen,
+  Tags,
+  CheckCircle
 } from "lucide-react";
 import { db } from "../shared/db";
 import {
@@ -30,13 +34,14 @@ import { searchPages } from "../shared/search";
 import type { DirectoryStatus, LibrarySnapshot, PageRecord, SearchPageResult, VersionRecord } from "../shared/types";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Separator } from "../components/ui/separator";
 import { Textarea } from "../components/ui/textarea";
+import "../styles/globals.css";
 
 const EMPTY_LIBRARY: LibrarySnapshot = { pages: [], versions: [], tags: [], queue: [] };
 const MAX_THUMBNAILS = 24;
@@ -49,7 +54,7 @@ export function App() {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [newTagName, setNewTagName] = useState("");
   const [pageNoteDraft, setPageNoteDraft] = useState("");
-  const [statusMessage, setStatusMessage] = useState("\u6b63\u5728\u52a0\u8f7d\u76ee\u5f55\u5185\u5bb9...");
+  const [statusMessage, setStatusMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
@@ -124,11 +129,10 @@ export function App() {
     startTransition(() => {
       setLibrary(snapshot);
       setDirectoryStatus(permission);
-      const nextResults = searchPages({ pages: snapshot.pages, versions: snapshot.versions, tags: snapshot.tags, query: deferredQuery, tagId: selectedTagId });
-      const nextSelected = nextSelectedPageId ?? (nextResults.some((item) => item.page.id === selectedPageId) ? selectedPageId : nextResults[0]?.page.id ?? null);
-      setSelectedPageId(nextSelected);
     });
-    setStatusMessage("");
+    const nextResults = searchPages({ pages: snapshot.pages, versions: snapshot.versions, tags: snapshot.tags, query: deferredQuery, tagId: selectedTagId });
+    const nextSelected = nextSelectedPageId ?? (nextResults.some((item) => item.page.id === selectedPageId) ? selectedPageId : nextResults[0]?.page.id ?? null);
+    setSelectedPageId(nextSelected);
   }
 
   async function handleChooseDirectory() {
@@ -136,7 +140,7 @@ export function App() {
       setBusy(true);
       await chooseDirectoryHandle();
       await chrome.runtime.sendMessage({ type: "processQueuedCaptures" });
-      setStatusMessage("\u76ee\u5f55\u5df2\u66f4\u65b0");
+      setStatusMessage("目录已更新");
       await reloadLibrary();
     } finally {
       setBusy(false);
@@ -147,18 +151,18 @@ export function App() {
     setBusy(true);
     const response = (await chrome.runtime.sendMessage({ type: "processQueuedCaptures" })) as { ok?: boolean; result?: { processed: number }; error?: string };
     if (!response.ok) {
-      setStatusMessage(response.error || "\u8865\u5199\u5931\u8d25");
+      setStatusMessage(response.error || "补写失败");
       setBusy(false);
       return;
     }
-    setStatusMessage("\u5df2\u5904\u7406 " + (response.result?.processed ?? 0) + " \u6761\u4efb\u52a1");
+    setStatusMessage("已处理 " + (response.result?.processed ?? 0) + " 条任务");
     await reloadLibrary();
     setBusy(false);
   }
 
   async function handleDeleteQueueItem(queueId: string) {
     await db.queue.delete(queueId);
-    setStatusMessage("\u961f\u5217\u4efb\u52a1\u5df2\u5220\u9664");
+    setStatusMessage("队列任务已删除");
     await reloadLibrary(selectedPageId);
   }
 
@@ -169,7 +173,7 @@ export function App() {
     const existingNames = library.tags.filter((tag) => selectedPage.tagIds.includes(tag.id)).map((tag) => tag.name);
     await updatePageMetadataOnDisk(selectedPage.pageKey, { tagNames: Array.from(new Set([...existingNames, newTagName.trim()])) });
     setNewTagName("");
-    setStatusMessage("\u6807\u7b7e\u5df2\u66f4\u65b0");
+    setStatusMessage("标签已更新");
     await reloadLibrary(selectedPage.id);
   }
 
@@ -184,19 +188,19 @@ export function App() {
     const currentNames = library.tags.filter((item) => selectedPage.tagIds.includes(item.id)).map((item) => item.name);
     const nextNames = selectedPage.tagIds.includes(tagId) ? currentNames.filter((item) => item !== tag.name) : [...currentNames, tag.name];
     await updatePageMetadataOnDisk(selectedPage.pageKey, { tagNames: nextNames });
-    setStatusMessage("\u6807\u7b7e\u5df2\u66f4\u65b0");
+    setStatusMessage("标签已更新");
     await reloadLibrary(selectedPage.id);
   }
 
   async function handleSavePageNote(page: PageRecord, note: string) {
     await updatePageMetadataOnDisk(page.pageKey, { note });
-    setStatusMessage("\u5907\u6ce8\u5df2\u4fdd\u5b58");
+    setStatusMessage("备注已保存");
     await reloadLibrary(page.id);
   }
 
   async function handleSaveVersionNote(version: VersionRecord, note: string) {
     await updateVersionMetadataOnDisk(version.id, { note });
-    setStatusMessage("\u5907\u6ce8\u5df2\u4fdd\u5b58");
+    setStatusMessage("备注已保存");
     await reloadLibrary(version.pageId);
   }
 
@@ -204,10 +208,9 @@ export function App() {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") {
       setDirectoryStatus(permission);
-      setStatusMessage("\u76ee\u5f55\u9700\u8981\u91cd\u65b0\u6388\u6743");
+      setStatusMessage("目录需要重新授权");
       return;
     }
-
     const targetPath = kind === "mhtml" ? version.mhtmlPath : kind === "full" ? version.fullPngPath : version.pngPath;
     try {
       const file = await readSnapshotFile(targetPath);
@@ -215,18 +218,18 @@ export function App() {
       await chrome.tabs.create({ url });
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
-      setStatusMessage("\u672c\u5730\u6587\u4ef6\u4e0d\u5b58\u5728\u6216\u65e0\u6cd5\u8bfb\u53d6");
+      setStatusMessage("本地文件不存在或无法读取");
     }
   }
 
   async function handleDeleteVersion(version: VersionRecord) {
-    if (!window.confirm("\u5220\u9664\u8fd9\u4e2a\u7248\u672c\u540e\uff0c\u4f1a\u540c\u65f6\u5220\u9664\u5bf9\u5e94\u76ee\u5f55\u548c\u672c\u5730\u6587\u4ef6\u3002\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f")) {
+    if (!window.confirm("删除这个版本后，会同时删除对应目录和本地文件。确定继续吗？")) {
       return;
     }
     setBusy(true);
     try {
       await deleteSnapshotDirectory(getVersionDirectoryPath(version));
-      setStatusMessage("\u7248\u672c\u5df2\u5220\u9664");
+      setStatusMessage("版本已删除");
       await reloadLibrary(version.pageId);
     } finally {
       setBusy(false);
@@ -234,7 +237,7 @@ export function App() {
   }
 
   async function handleDeletePage(page: PageRecord) {
-    if (!window.confirm("\u5220\u9664\u7f51\u9875\u4f1a\u8fde\u540c\u5168\u90e8\u5386\u53f2\u7248\u672c\u4e0e\u5bf9\u5e94\u76ee\u5f55\u4e00\u8d77\u6e05\u7406\u3002\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f")) {
+    if (!window.confirm("删除网页会连同全部历史版本与对应目录一起清理。确定继续吗？")) {
       return;
     }
     setBusy(true);
@@ -243,7 +246,7 @@ export function App() {
       if (latestVersion) {
         await deleteSnapshotDirectory(getPageDirectoryPath(latestVersion));
       }
-      setStatusMessage("\u7f51\u9875\u5df2\u5220\u9664");
+      setStatusMessage("网页已删除");
       await reloadLibrary();
     } finally {
       setBusy(false);
@@ -254,7 +257,7 @@ export function App() {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") {
       setDirectoryStatus(permission);
-      setStatusMessage("\u5bfc\u51fa\u524d\u8bf7\u5148\u91cd\u65b0\u6388\u6743\u76ee\u5f55");
+      setStatusMessage("导出前请先重新授权目录");
       return;
     }
     setBusy(true);
@@ -269,174 +272,127 @@ export function App() {
       const tag = library.tags.find((item) => item.id === selectedTagId);
       const fileName = selectedOnly && tag ? `UIstash-${slugify(tag.name)}.zip` : "UIstash-library.zip";
       await saveZipBlob(blob, fileName);
-      setStatusMessage("\u5bfc\u51fa\u4efb\u52a1\u5df2\u63d0\u4ea4\u5230\u6d4f\u89c8\u5668\u4e0b\u8f7d");
+      setStatusMessage("导出任务已提交到浏览器下载");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="grid h-screen overflow-hidden grid-cols-[288px_minmax(520px,1fr)_420px] bg-transparent max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:grid-cols-1">
-      <aside className="grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden border-r border-[#e5ded4] bg-[#f7f2eb]/70 p-5 backdrop-blur max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-r-0 max-[1180px]:border-b max-[1180px]:p-4">
+    <div className="grid h-screen overflow-hidden grid-cols-[260px_minmax(580px,1fr)_400px] gap-4 p-4 bg-[var(--bg-base)] max-[1240px]:h-auto max-[1240px]:grid-cols-1 max-[1240px]:overflow-visible">
+
+      {/* Sidebar */}
+      <aside className="flex flex-col gap-4 overflow-hidden rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-4 shadow-[var(--shadow-sm)] max-[1240px]:h-auto">
+
         <div>
-          <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[#635e56]">UIstash</h1>
+          <h1 className="text-[20px] font-bold tracking-[-0.04em] text-[var(--ink-primary)]">UIstash</h1>
+          <p className="text-[12px] text-[var(--ink-tertiary)] mt-0.5">Personal Archive</p>
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="size-1.5 rounded-full" style={{ backgroundColor: directoryStatus === "granted" ? "var(--success)" : directoryStatus === "stale" ? "var(--accent)" : "var(--ink-ghost)" }} />
+            <span className="text-[11px] text-[var(--ink-tertiary)]">{statusText(directoryStatus)}</span>
+            <span className="text-[var(--ink-ghost)]">·</span>
+            <span className="text-[11px] text-[var(--ink-tertiary)]">{library.pages.length} 页面</span>
+          </div>
         </div>
 
-        <Card className="min-h-0 border-[#e3ddd4] bg-white/72 shadow-none">
-          <CardContent className="min-h-0 pt-5">
-            <ScrollArea className="h-full pr-3 max-[1180px]:h-auto">
-              <div className="grid gap-2 pb-2">
-                <Button variant={selectedTagId ? "secondary" : "outline"} className="justify-between" onClick={() => setSelectedTagId(null)}>
-                  <span>{"\u5168\u90e8\u7f51\u9875"}</span>
-                  <Badge variant="secondary">{library.pages.length}</Badge>
-                </Button>
-                {library.tags.map((tag) => (
-                  <Button
-                    key={tag.id}
-                    variant={selectedTagId === tag.id ? "outline" : "secondary"}
-                    className="justify-between"
-                    onClick={() => setSelectedTagId(tag.id)}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                      {tag.name}
-                    </span>
-                    <Badge variant="secondary">{countPagesForTag(library.pages, tag.id)}</Badge>
-                  </Button>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+        <Separator />
 
-        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="secondary" className="justify-center gap-2">
-              <Settings2 className="size-4" />
-              {"\u8bbe\u7f6e"}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="border-[#ddd6cc] bg-white/92 p-0 sm:max-w-[720px]">
-            <DialogHeader className="px-6 pt-6">
-              <DialogTitle>{"\u8bbe\u7f6e"}</DialogTitle>
-
-            </DialogHeader>
-            <Separator />
-            <div className="grid gap-6 px-6 pb-6">
-              <Card className="border-[#e3ddd4] bg-[#fcfaf6] shadow-none">
-                <CardContent className="grid gap-1 p-4">
-                  <p className="text-sm text-[#8b8479]">{"\u672c\u5730\u5b58\u50a8\u72b6\u6001"}</p>
-                  <p className="text-base font-semibold text-[#635e56]">{statusText(directoryStatus)}</p>
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button onClick={handleChooseDirectory} disabled={busy} className="justify-start">
-                  <FolderOpen className="size-4" />
-                  {"\u9009\u62e9\u6216\u91cd\u6388\u6743\u76ee\u5f55"}
+        <div className="flex-1 overflow-hidden flex flex-col gap-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)]">Tags</p>
+          <ScrollArea className="flex-1 max-[1240px]:h-auto pr-3">
+            <div className="flex flex-col gap-1">
+              <Button
+                variant={!selectedTagId ? "outline" : "ghost"}
+                size="sm"
+                className="justify-between"
+                onClick={() => setSelectedTagId(null)}
+              >
+                <span className="text-[13px]">全部网页</span>
+                <span className="text-[var(--ink-ghost)] text-[12px]">{library.pages.length}</span>
+              </Button>
+              {library.tags.map((tag) => (
+                <Button
+                  key={tag.id}
+                  variant={selectedTagId === tag.id ? "outline" : "ghost"}
+                  size="sm"
+                  className="justify-between"
+                  onClick={() => setSelectedTagId(tag.id)}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <span className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                    <span className="text-[13px] truncate">{tag.name}</span>
+                  </span>
+                  <span className="text-[var(--ink-ghost)] text-[12px] ml-1">{countPagesForTag(library.pages, tag.id)}</span>
                 </Button>
-                <Button variant="secondary" onClick={handleRetryQueue} disabled={busy} className="justify-start">
-                  <RefreshCw className="size-4" />
-                  {"\u91cd\u8bd5\u5f85\u5904\u7406\u961f\u5217"}
-                </Button>
-                <Button variant="secondary" onClick={() => void handleExport(false)} disabled={busy} className="justify-start">
-                  <Archive className="size-4" />
-                  {"\u5bfc\u51fa\u6574\u5e93 ZIP"}
-                </Button>
-                <Button variant="secondary" onClick={() => void handleExport(true)} disabled={busy || !selectedTagId} className="justify-start">
-                  <GalleryVerticalEnd className="size-4" />
-                  {"\u6309\u6807\u7b7e\u5bfc\u51fa ZIP"}
-                </Button>
-              </div>
-
-              {statusMessage ? <p className="text-sm leading-6 text-[#6d675e]">{statusMessage}</p> : null}
-
-              {library.queue.length > 0 ? (
-                <>
-                  <Separator />
-                  <ScrollArea className="max-h-[320px] pr-3">
-                    <div className="grid gap-3">
-                      {library.queue.map((item) => (
-                        <Card key={item.id} className="border-[#e3ddd4] bg-[#fcfaf6] shadow-none">
-                          <CardContent className="grid gap-3 p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-base font-semibold tracking-[-0.02em] text-[#635e56]">{item.title}</p>
-                                <p className="mt-1 text-sm leading-6 text-[#6d675e]">{item.reason}</p>
-                              </div>
-                              <Button variant="destructive" size="sm" onClick={() => void handleDeleteQueueItem(item.id)}>
-                                <Trash2 className="size-4" />
-                                {"\u5220\u9664"}
-                              </Button>
-                            </div>
-                            <Badge variant="secondary">{formatTime(item.requestedAt)}</Badge>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </>
-              ) : null}
+              ))}
             </div>
-          </DialogContent>
-        </Dialog>
+          </ScrollArea>
+        </div>
+
+        <Button variant="ghost" size="sm" className="text-[var(--ink-tertiary)] mt-auto justify-start" onClick={() => setSettingsOpen(true)}>
+          <Settings2 className="size-3.5 mr-1.5" />
+          设置
+        </Button>
       </aside>
 
-      <main className="grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden p-6 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:p-4">
-        <Card className="border-[#e3ddd4] bg-white/76">
-          <CardContent className="flex items-end justify-between gap-4 p-5 max-[860px]:flex-col max-[860px]:items-stretch">
-            <CardTitle className="text-[26px]">{selectedTagId ? library.tags.find((tag) => tag.id === selectedTagId)?.name || "\u5168\u90e8\u7f51\u9875" : "\u5168\u90e8\u7f51\u9875"}</CardTitle>
-            <div className="w-full max-w-[380px]">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#948d82]" />
-                <Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"\u641c\u7d22"} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Content */}
+      <main className="flex flex-col gap-4 overflow-hidden rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-[var(--shadow-sm)] max-[1240px]:h-auto max-[1240px]:overflow-visible">
 
-        <ScrollArea className="h-full pr-3">
-          <div className="grid gap-4 pb-4">
+        {/* Top bar */}
+        <div className="flex items-end justify-between px-5 py-4 gap-4">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)]">Browse</p>
+            <h2 className="font-semibold text-[18px] tracking-[-0.03em] text-[var(--ink-primary)]">
+              {selectedTagId ? library.tags.find((tag) => tag.id === selectedTagId)?.name || "全部网页" : "全部网页"}
+            </h2>
+          </div>
+          <div className="relative w-full max-w-[320px]">
+            <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ink-ghost)] pointer-events-none" />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索..." className="pl-9 h-9" />
+          </div>
+        </div>
+
+        {/* Results */}
+        <ScrollArea className="flex-1 px-5 pb-5 max-[1240px]:h-auto">
+          <div className="flex flex-col gap-2.5 pb-4">
             {results.length === 0 ? (
-              <Card className="h-full border-dashed border-[#ddd6cc] bg-white/70 shadow-none">
-                <CardContent className="grid min-h-[220px] place-items-center p-6 text-center text-[#6d675e]">{"\u6ca1\u6709\u7ed3\u679c"}</CardContent>
-              </Card>
+              <div className="flex items-center justify-center h-[180px] text-[13px] text-[var(--ink-tertiary)] border border-dashed border-[var(--border-default)] rounded-[12px]">没有结果</div>
             ) : null}
             {results.map((result) => {
               const latestVersion = result.latestVersion;
               const thumbnailUrl = thumbnailUrls[result.page.id];
+              const isSelected = selectedPage?.id === result.page.id;
               return (
-                <button key={result.page.id} type="button" className="text-left" onClick={() => setSelectedPageId(result.page.id)}>
-                  <Card className={selectedPage?.id === result.page.id ? "border-[#cfc3b3] bg-[#faf6ef]" : "border-[#e3ddd4] bg-white/78"}>
-                    <CardContent className="grid grid-cols-[168px_1fr] gap-4 p-4 max-[760px]:grid-cols-1">
-                      <div className="relative overflow-hidden rounded-xl border border-[#e3ddd4] bg-[#f5efe6]">
-                        {thumbnailUrl ? (
-                          <img src={thumbnailUrl} alt={result.page.title} className="h-[116px] w-full object-cover" />
-                        ) : (
-                          <div className="grid h-[116px] place-items-center text-sm font-semibold text-[#7c7569]">{"\u6682\u65e0\u77ed\u622a\u56fe"}</div>
-                        )}
+                <button key={result.page.id} type="button" className="w-full text-left" onClick={() => setSelectedPageId(result.page.id)}>
+                  <div
+                    className={`w-full flex gap-4 p-4 rounded-[12px] border transition-all duration-150 ${
+                      isSelected
+                        ? "border-[var(--border-strong)] bg-[var(--bg-elevated)] shadow-[var(--shadow-md)]"
+                        : "border-[var(--border-default)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] hover:border-[var(--border-strong)]"
+                    }`}
+                  >
+                    <div className="w-[140px] h-[100px] rounded-[8px] overflow-hidden bg-[var(--bg-sunken)] shrink-0">
+                      {thumbnailUrl ? (
+                        <img src={thumbnailUrl} alt={result.page.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[11px] text-[var(--ink-ghost)]">暂无截图</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                      <div>
+                        <h3 className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--ink-primary)] line-clamp-2 leading-[1.25]">{result.page.title}</h3>
+                        <p className="text-[11px] text-[var(--ink-tertiary)] mt-1">{safeHost(result.page.latestUrl)}</p>
                       </div>
-
-                      <div className="grid gap-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <h3 className="line-clamp-2 text-xl font-semibold tracking-[-0.02em] text-[#635e56]">{result.page.title}</h3>
-                            <p className="mt-1 text-sm text-[#8b8479]">{safeHost(result.page.latestUrl)}</p>
-                          </div>
-                          <Badge variant="secondary">{result.page.versionCount}</Badge>
-                        </div>
-                        <p className="line-clamp-2 text-sm leading-6 text-[#6d675e]">{result.matchedVersions[0]?.snippet || result.page.note || "\u6682\u65e0\u6458\u8981"}</p>
-                        <div className="flex items-end justify-between gap-3 max-[760px]:flex-col max-[760px]:items-start">
-                          <p className="text-xs text-[#8b8479]">{latestVersion ? formatTime(latestVersion.capturedAt) : "\u5c1a\u65e0\u7248\u672c"}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {result.tagNames.map((tagName) => (
-                              <Badge key={tagName} variant="secondary">{tagName}</Badge>
-                            ))}
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] text-[var(--ink-ghost)]">{latestVersion ? formatTime(latestVersion.capturedAt) : "尚无版本"}</p>
+                        <div className="flex gap-1">
+                          {result.tagNames.slice(0, 2).map((name) => (
+                            <span key={name} className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-sunken)] text-[var(--ink-tertiary)]">{name}</span>
+                          ))}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </button>
               );
             })}
@@ -444,129 +400,214 @@ export function App() {
         </ScrollArea>
       </main>
 
-      <section className="h-screen overflow-hidden border-l border-[#e5ded4] bg-white/74 p-5 backdrop-blur max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-l-0 max-[1180px]:border-t max-[1180px]:p-4">
+      {/* Detail Panel */}
+      <aside className="flex flex-col overflow-hidden rounded-[16px] border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-[var(--shadow-sm)] max-[1240px]:h-auto max-[1240px]:overflow-visible">
         {selectedPage ? (
-          <div className="grid h-full min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-4">
-            <Card className="border-[#e3ddd4] bg-white/78 shadow-none">
-              <CardHeader className="gap-3">
-                <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="text-[26px] leading-[1.15]">{selectedPage.title}</CardTitle>
-                  <Button variant="destructive" size="sm" onClick={() => void handleDeletePage(selectedPage)} disabled={busy}>
-                    <Trash2 className="size-4" />
-                    {"\u5220\u9664\u7f51\u9875"}
-                  </Button>
-                </div>
-                <a href={selectedPage.latestUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-[#7e776b] hover:text-[#635e56]">
-                  <span className="line-clamp-2">{selectedPage.latestUrl}</span>
-                  <ExternalLink className="size-4 shrink-0" />
-                </a>
-              </CardHeader>
-            </Card>
+          <div className="flex flex-col h-full overflow-auto">
+            {/* Page header */}
+            <div className="px-5 pt-5 pb-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-2">Inspector</p>
+              <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-[var(--ink-primary)] line-clamp-2 leading-[1.2]">{selectedPage.title}</h2>
+              <a
+                href={selectedPage.latestUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 mt-1 text-[11px] text-[var(--ink-tertiary)] hover:text-[var(--ink-secondary)] transition-colors"
+              >
+                <span className="truncate max-w-[200px]">{selectedPage.latestUrl}</span>
+                <ExternalLink className="size-2.5 shrink-0" />
+              </a>
+            </div>
 
-            <Card className="border-[#e3ddd4] bg-white/78 shadow-none">
-              <CardContent className="p-5">
-                <Textarea
-                  value={pageNoteDraft}
-                  placeholder={"\u5907\u6ce8"}
-                  onChange={(event) => setPageNoteDraft(event.target.value)}
-                  onBlur={() => {
-                    if (pageNoteDraft !== selectedPage.note) {
-                      void handleSavePageNote(selectedPage, pageNoteDraft);
-                    }
-                  }}
-                />
-              </CardContent>
-            </Card>
+            <Separator className="my-4 mx-5" />
 
-            <Card className="border-[#e3ddd4] bg-white/78 shadow-none">
-              <CardContent className="grid gap-4 p-5">
-                <div className="flex flex-wrap gap-2">
-                  {library.tags.map((tag) => (
-                    <Button
-                      key={tag.id}
-                      type="button"
-                      variant={selectedPage.tagIds.includes(tag.id) ? "outline" : "secondary"}
-                      size="sm"
-                      className="rounded-full px-3"
-                      onClick={() => void toggleTagForSelectedPage(tag.id)}
-                    >
-                      <span className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                      {tag.name}
-                    </Button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-[1fr_auto] gap-3 max-[760px]:grid-cols-1">
-                  <Input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} placeholder={"\u65b0\u6807\u7b7e"} />
-                  <Button variant="secondary" onClick={() => void handleCreateTag()} disabled={busy || !selectedPage}>
-                    {"\u6dfb\u52a0"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Note */}
+            <div className="px-5">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-2">Note</p>
+              <Textarea
+                value={pageNoteDraft}
+                placeholder="添加备注..."
+                onChange={(event) => setPageNoteDraft(event.target.value)}
+                onBlur={() => {
+                  if (pageNoteDraft !== selectedPage.note) {
+                    void handleSavePageNote(selectedPage, pageNoteDraft);
+                  }
+                }}
+                className="min-h-[80px] text-[13px]"
+              />
+            </div>
 
-            <Card className="border-[#e3ddd4] bg-white/78 shadow-none">
-              <CardContent className="p-5">
-                <ScrollArea className="h-full pr-3 max-[1180px]:h-auto">
-                  <div className="grid gap-4">
-                    {selectedVersions.map((version) => {
-                      const matched = selectedResult?.matchedVersions.find((item) => item.version.id === version.id);
-                      return (
-                        <Card key={version.id} className="border-[#e7e0d7] bg-[#fcfaf6] shadow-none">
-                          <CardContent className="grid gap-4 p-4">
-                            <div className="flex items-start justify-between gap-3 max-[760px]:flex-col">
-                              <p className="text-lg font-semibold tracking-[-0.02em] text-[#635e56]">{formatTime(version.capturedAt)}</p>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="secondary" size="icon" aria-label={"\u7248\u672c\u64cd\u4f5c"}>
-                                    <MoreHorizontal className="size-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onSelect={() => void handleOpenFile(version, "png")}>
-                                    <ImageIcon className="size-4" />
-                                    {"\u77ed\u622a\u56fe"}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onSelect={() => void handleOpenFile(version, "full")}>
-                                    <GalleryVerticalEnd className="size-4" />
-                                    {"\u957f\u622a\u56fe"}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onSelect={() => void handleOpenFile(version, "mhtml")}>
-                                    <FileText className="size-4" />
-                                    MHTML
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem variant="destructive" onSelect={() => void handleDeleteVersion(version)} disabled={busy}>
-                                    <Trash2 className="size-4" />
-                                    {"\u5220\u9664\u7248\u672c"}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <p className="text-sm leading-6 text-[#6d675e]">{matched?.snippet || version.extractedText.slice(0, 140) || "\u6682\u65e0\u6b63\u6587\u6458\u8981"}</p>
-                            <Textarea defaultValue={version.note} placeholder={"\u5907\u6ce8"} onBlur={(event) => void handleSaveVersionNote(version, event.target.value)} />
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+            <Separator className="my-4 mx-5" />
+
+            {/* Tags */}
+            <div className="px-5">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-2">Tags</p>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {library.tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => void toggleTagForSelectedPage(tag.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] transition-all duration-100 border ${
+                      selectedPage.tagIds.includes(tag.id)
+                        ? "bg-[var(--accent-soft)] border-[rgba(196,168,130,0.2)] text-[var(--ink-primary)]"
+                        : "bg-[var(--bg-sunken)] border-transparent text-[var(--ink-tertiary)] hover:bg-[var(--bg-subtle)]"
+                    }`}
+                  >
+                    <span className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input value={newTagName} onChange={(event) => setNewTagName(event.target.value)} placeholder="新增标签" className="h-8 text-[12px]" />
+                <Button variant="secondary" size="sm" onClick={() => void handleCreateTag()} disabled={busy || !selectedPage} className="shrink-0">添加</Button>
+              </div>
+            </div>
+
+            <Separator className="my-4 mx-5" />
+
+            {/* Versions */}
+            <div className="flex-1 px-5 pb-4 overflow-hidden flex flex-col">
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-3">Versions</p>
+              <ScrollArea className="flex-1 max-[1240px]:h-auto pr-3">
+                <div className="flex flex-col gap-2.5 pb-2">
+                  {selectedVersions.map((version) => {
+                    const matched = selectedResult?.matchedVersions.find((item) => item.version.id === version.id);
+                    return (
+                      <div key={version.id} className="border border-[var(--border-default)] rounded-[12px] p-3.5 bg-[var(--bg-base)]">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div>
+                            <p className="text-[13px] font-medium text-[var(--ink-primary)]">{formatTime(version.capturedAt)}</p>
+                            <p className="text-[10px] text-[var(--ink-tertiary)] mt-0.5">{triggerLabel(version.trigger)}</p>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="secondary" size="icon" className="size-[28px]" aria-label="版本操作">
+                                <MoreHorizontal className="size-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => void handleOpenFile(version, "png")}>
+                                <ImageIcon className="size-3.5" /> 短截图
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => void handleOpenFile(version, "full")}>
+                                <GalleryVerticalEnd className="size-3.5" /> 长截图
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => void handleOpenFile(version, "mhtml")}>
+                                <FileText className="size-3.5" /> MHTML
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem variant="destructive" onSelect={() => void handleDeleteVersion(version)} disabled={busy}>
+                                <Trash2 className="size-3.5" /> 删除版本
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-[12px] leading-6 text-[var(--ink-tertiary)] line-clamp-2 mb-2">{matched?.snippet || version.extractedText.slice(0, 120) || "暂无正文摘要"}</p>
+                        <Textarea
+                          defaultValue={version.note}
+                          placeholder="版本备注..."
+                          onBlur={(event) => void handleSaveVersionNote(version, event.target.value)}
+                          className="min-h-[72px] text-[12px]"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Delete */}
+            <div className="px-5 pb-5 mt-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[var(--danger)] w-full justify-center hover:bg-[var(--danger-soft)]"
+                onClick={() => void handleDeletePage(selectedPage)}
+                disabled={busy}
+              >
+                <Trash2 className="size-3.5 mr-1.5" />
+                删除网页
+              </Button>
+            </div>
           </div>
         ) : (
-          <Card className="h-full border-dashed border-[#ddd6cc] bg-white/70 shadow-none">
-            <CardContent className="grid min-h-[320px] place-items-center p-6 text-center text-[#6d675e]">{"\u9009\u62e9\u4e00\u4e2a\u7f51\u9875"}</CardContent>
-          </Card>
+          <div className="flex items-center justify-center h-full text-[13px] text-[var(--ink-tertiary)] px-8 text-center">选择一个网页开始查看详情</div>
         )}
-      </section>
+      </aside>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="p-0">
+          <DialogHeader className="px-6 pt-6 pb-4">
+            <DialogTitle>设置与归档维护</DialogTitle>
+          </DialogHeader>
+          <Separator />
+          <div className="grid gap-5 px-6 py-5">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button onClick={handleChooseDirectory} disabled={busy} className="justify-start">
+                <FolderOpen className="size-4 mr-2" />
+                选择或重授权目录
+              </Button>
+              <Button variant="secondary" onClick={handleRetryQueue} disabled={busy} className="justify-start">
+                <RefreshCw className="size-4 mr-2" />
+                重试待处理队列
+              </Button>
+              <Button variant="secondary" onClick={() => void handleExport(false)} disabled={busy} className="justify-start">
+                <Archive className="size-4 mr-2" />
+                导出整库 ZIP
+              </Button>
+              <Button variant="secondary" onClick={() => void handleExport(true)} disabled={busy || !selectedTagId} className="justify-start">
+                <GalleryVerticalEnd className="size-4 mr-2" />
+                按标签导出 ZIP
+              </Button>
+            </div>
+
+            <Card className="bg-[var(--bg-base)] shadow-none border-[var(--border-default)]">
+              <CardContent className="grid gap-1 p-4">
+                <p className="text-[12px] text-[var(--ink-tertiary)]">本地目录状态</p>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="size-3.5 text-[var(--success)]" />
+                  <p className="text-[14px] font-medium text-[var(--ink-primary)]">{statusText(directoryStatus)}</p>
+                </div>
+                {statusMessage ? <p className="text-[12px] leading-6 text-[var(--ink-tertiary)]">{statusMessage}</p> : null}
+              </CardContent>
+            </Card>
+
+            {library.queue.length > 0 ? (
+              <>
+                <Separator />
+                <ScrollArea className="max-h-[280px] pr-3">
+                  <div className="flex flex-col gap-2.5">
+                    {library.queue.map((item) => (
+                      <Card key={item.id} className="bg-[var(--bg-base)] shadow-none border-[var(--border-default)]">
+                        <CardContent className="grid gap-2 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-[13px] font-medium text-[var(--ink-primary)]">{item.title}</p>
+                              <p className="text-[12px] text-[var(--ink-tertiary)] mt-0.5">{item.reason}</p>
+                            </div>
+                            <Button variant="destructive" size="sm" onClick={() => void handleDeleteQueueItem(item.id)} className="shrink-0">
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                          <Badge variant="secondary">{formatTime(item.requestedAt)}</Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function pickSelectedResult(results: SearchPageResult[], selectedPageId: string | null): SearchPageResult | undefined {
-  if (!results.length) {
-    return undefined;
-  }
+  if (!results.length) return undefined;
   return results.find((item) => item.page.id === selectedPageId) ?? results[0];
 }
 
@@ -575,13 +616,9 @@ function countPagesForTag(pages: PageRecord[], tagId: string): number {
 }
 
 function statusText(directoryStatus: DirectoryStatus): string {
-  if (directoryStatus === "granted") {
-    return "\u5df2\u8fde\u63a5\u6388\u6743\u76ee\u5f55";
-  }
-  if (directoryStatus === "stale") {
-    return "\u76ee\u5f55\u6388\u6743\u9700\u8981\u5237\u65b0";
-  }
-  return "\u8bf7\u5148\u9009\u62e9\u5f52\u6863\u76ee\u5f55";
+  if (directoryStatus === "granted") return "目录已连接";
+  if (directoryStatus === "stale") return "目录待刷新";
+  return "请先选择归档目录";
 }
 
 function formatTime(timestamp: number): string {
@@ -606,7 +643,8 @@ function safeHost(url: string): string {
   }
 }
 
-
-
-
-
+function triggerLabel(trigger: VersionRecord["trigger"]): string {
+  if (trigger === "manual") return "手动归档";
+  if (trigger === "auto") return "自动归档";
+  return "补写队列";
+}

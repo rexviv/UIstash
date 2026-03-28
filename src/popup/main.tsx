@@ -1,14 +1,14 @@
-﻿import { StrictMode, useEffect, useMemo, useState } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { LibraryBig, Settings2 } from "lucide-react";
+import { LibraryBig, Settings2, ArrowRight } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Separator } from "../components/ui/separator";
 import { Textarea } from "../components/ui/textarea";
 import { scanLibrarySnapshot } from "../shared/filesystem";
-import type { ActivePageSummary, TagRecord } from "../shared/types";
+import type { ActivePageSummary, DirectoryStatus, TagRecord } from "../shared/types";
+import { directoryStatusLabel, formatCaptured, normalizeTags, popupArchiveState, popupMetaText, popupPageTitle, popupUrlText } from "./normalizeTags";
 import "../styles/globals.css";
 
 function PopupApp() {
@@ -39,6 +39,12 @@ function PopupApp() {
 
   const mergedTagNames = useMemo(() => normalizeTags(selectedTags, newTags), [selectedTags, newTags]);
   const saveDisabled = busy || !summary?.isSupported;
+  const archiveState = popupArchiveState(summary);
+  const metaText = popupMetaText(summary);
+  const pageTitle = popupPageTitle(summary);
+  const pageUrl = popupUrlText(summary);
+  const directoryText = directoryStatusLabel(summary?.directoryStatus ?? "missing");
+  const host = safeHost(summary?.url);
 
   async function refresh() {
     const [summaryResponse, snapshot] = await Promise.all([
@@ -88,66 +94,100 @@ function PopupApp() {
   }
 
   return (
-    <main className="flex h-full w-full flex-col gap-3 overflow-hidden p-4">
-      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-[#ded6ca] bg-white/78 shadow-[0_20px_44px_rgba(82,62,38,0.1)]">
-        <CardHeader className="flex flex-row items-start justify-between gap-4 border-b border-[#e9e3d9] bg-[#fbf8f2]/80 pb-4">
-          <CardTitle className="text-[22px]">UIstash</CardTitle>
-          <Button variant="secondary" size="icon" onClick={() => chrome.runtime.openOptionsPage()} disabled={busy} aria-label={"\u6253\u5f00\u7ba1\u7406\u9875"}>
-            <Settings2 className="size-4" />
-          </Button>
-        </CardHeader>
-
-        <CardContent className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4">
-          <Card className="border-[#e6dfd6] bg-[#faf6ef]/90 shadow-none">
-            <CardContent className="flex items-center justify-end p-4">
-              <Badge variant="secondary">{summary?.pendingQueueCount ?? 0}</Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden border-[#e6dfd6] bg-white/90 shadow-none">
-            <CardHeader className="gap-1 p-4 pb-2">
-              <div className="flex items-start justify-between gap-3">
-                <CardTitle className="line-clamp-2 text-base leading-6">{summary?.title || "\u5f53\u524d\u7f51\u9875"}</CardTitle>
-                {summary?.page ? <Badge>{"\u5df2\u5f52\u6863"}</Badge> : null}
-              </div>
-            </CardHeader>
-            <CardContent className="line-clamp-2 overflow-hidden p-4 pt-0 text-sm text-[#6d675e]">{summary?.url || "\u5f53\u524d\u6807\u7b7e\u9875\u6682\u4e0d\u652f\u6301\u4fdd\u5b58"}</CardContent>
-          </Card>
-
-          <div className="flex flex-wrap gap-2 overflow-hidden">
-            {availableTags.map((tag) => (
-              <Button
-                key={tag.id}
-                type="button"
-                variant={selectedTags.includes(tag.name) ? "outline" : "secondary"}
-                size="sm"
-                className="max-w-full rounded-full px-3"
-                onClick={() => toggleTag(tag.name)}
-              >
-                <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
-                <span className="truncate">{tag.name}</span>
-              </Button>
-            ))}
+    <main className="flex h-full w-full flex-col overflow-hidden bg-[var(--bg-base)] p-4">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-[-0.04em] text-[var(--ink-primary)]">UIstash</h1>
+          <div className="flex items-center gap-2 mt-1.5">
+            <Badge variant={archiveState === "已归档" ? "success" : "secondary"}>{archiveState}</Badge>
+            {summary?.pendingQueueCount && summary.pendingQueueCount > 0 ? (
+              <Badge variant="secondary">{summary.pendingQueueCount} 待补写</Badge>
+            ) : null}
           </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => chrome.runtime.openOptionsPage()} disabled={busy} aria-label="打开管理页">
+          <Settings2 className="size-4" />
+        </Button>
+      </div>
 
-          <Input value={newTags} onChange={(event) => setNewTags(event.target.value)} placeholder={"\u65b0\u6807\u7b7e"} />
-
-          <Separator />
-
-          <Textarea value={pageNote} onChange={(event) => setPageNote(event.target.value)} placeholder={"\u5907\u6ce8"} className="min-h-[88px] max-h-[132px]" />
+      {/* Page Card */}
+      <Card className="mb-4">
+        <CardContent className="p-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-2">{metaText}</p>
+          <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-[var(--ink-primary)] leading-[1.2] mb-1 line-clamp-2">{pageTitle}</h2>
+          <p className="text-[12px] text-[var(--ink-tertiary)] mb-3 line-clamp-1">{pageUrl}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[15px] font-medium text-[var(--ink-primary)]">{host}</p>
+              <p className="text-[11px] text-[var(--ink-tertiary)]">{summary?.latestVersion ? formatCaptured(summary.latestVersion.capturedAt) : directoryText}</p>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => chrome.runtime.openOptionsPage()}>
+              管理页 <ArrowRight className="size-3.5" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      <Button onClick={handleSave} disabled={saveDisabled} className="h-12 shrink-0 text-sm">
-        <LibraryBig className="size-4" />
-        {"\u4fdd\u5b58\u5f53\u524d\u7f51\u9875"}
-      </Button>
+      {/* Tags */}
+      <div className="mb-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--ink-tertiary)] mb-2">标签</p>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {availableTags.length > 0 ? (
+            availableTags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => toggleTag(tag.name)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] transition-all duration-100 border ${
+                  selectedTags.includes(tag.name)
+                    ? "bg-[var(--accent-soft)] border-[rgba(196,168,130,0.2)] text-[var(--ink-primary)]"
+                    : "bg-[var(--bg-sunken)] border-transparent text-[var(--ink-tertiary)] hover:bg-[var(--bg-subtle)]"
+                }`}
+              >
+                <span className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                {tag.name}
+              </button>
+            ))
+          ) : (
+            <p className="text-[12px] text-[var(--ink-ghost)]">还没有标签</p>
+          )}
+        </div>
+        <Input value={newTags} onChange={(event) => setNewTags(event.target.value)} placeholder="添加标签，多个可用逗号分隔" />
+      </div>
+
+      {/* Note */}
+      <Textarea
+        value={pageNote}
+        onChange={(event) => setPageNote(event.target.value)}
+        placeholder="写一句简短备注，帮助以后回看。"
+        className="flex-1 mb-4 min-h-[100px]"
+      />
+
+      {/* Footer Actions */}
+      <div className="flex gap-2">
+        <Button variant="secondary" onClick={() => chrome.runtime.openOptionsPage()} disabled={busy} className="px-4">
+          设置
+        </Button>
+        <Button onClick={handleSave} disabled={saveDisabled} className="flex-1 justify-center font-semibold">
+          <LibraryBig className="size-4" />
+          保存
+          <ArrowRight className="size-3.5" />
+        </Button>
+      </div>
     </main>
   );
 }
 
-function normalizeTags(selected: string[], extra: string): string[] {
-  return Array.from(new Set([...selected, ...extra.split(/[\uFF0C,\n]/).map((item) => item.trim()).filter(Boolean)]));
+function safeHost(url?: string) {
+  if (!url) {
+    return "未识别站点";
+  }
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
 }
 
 createRoot(document.getElementById("root") as HTMLElement).render(
