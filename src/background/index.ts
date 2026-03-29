@@ -394,10 +394,13 @@ async function captureArchiveHtml(tabId: number, sourceUrl: string): Promise<str
   });
   const { html: pageHtml } = (result.result as { html: string; url: string }) ?? { html: "", url: sourceUrl };
 
-  // Step 2: Collect and inline external images as data URIs
-  const htmlWithInlinedImages = await inlineImagesToDataUrls(pageHtml, sourceUrl);
+  // Step 2: Inline external stylesheets as <style> tags
+  const htmlWithInlinedCss = await inlineStylesheets(pageHtml, sourceUrl);
 
-  // Step 3: Wrap with archive header and return as data URL
+  // Step 3: Collect and inline external images as data URIs
+  const htmlWithInlinedImages = await inlineImagesToDataUrls(htmlWithInlinedCss, sourceUrl);
+
+  // Step 4: Wrap with archive header and return as data URL
   const date = new Date();
   const dateStr = new Intl.DateTimeFormat("zh-CN", {
     year: "numeric", month: "2-digit", day: "2-digit",
@@ -474,6 +477,61 @@ async function inlineImagesToDataUrls(html: string, baseUrl: string): Promise<st
       // Also handle already-encoded URLs
       result = result.replace(new RegExp(`src=["']${escapedDataUrl}["']`, "gi"), `src="${dataUrl}"`);
     }
+  }
+
+  return result;
+}
+
+async function inlineStylesheets(html: string, baseUrl: string): Promise<string> {
+  // Match <link rel="stylesheet" href="URL"> — handles any attribute order
+  const linkRegex = /<link\b(?:[^>]*?\s+)?rel=["']stylesheet["'](?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>/gi;
+  const matches: Array<{ full: string; url: string }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = linkRegex.exec(html)) !== null) {
+    const full = match[0];
+    let url = match[1];
+    // Resolve relative URLs
+    if (url.startsWith("//")) {
+      url = "https:" + url;
+    } else if (url.startsWith("/")) {
+      try { url = new URL(baseUrl).origin + url; } catch { continue; }
+    } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      try { url = new URL(url, baseUrl).href; } catch { continue; }
+    }
+    matches.push({ full, url });
+  }
+
+  if (matches.length === 0) return html;
+
+  // Fetch all stylesheets in parallel
+  const results = await Promise.allSettled(
+    matches.map(async ({ url }) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const text = await response.text();
+        return { originalUrl: url, css: text };
+      } catch {
+        return { originalUrl: url, css: null };
+      }
+    })
+  );
+
+  // Build replacement map
+  const replacements = new Map<string, string>();
+  for (let i = 0; i < matches.length; i++) {
+    const result = results[i];
+    if (result.status === "fulfilled" && result.value.css !== null) {
+      replacements.set(matches[i].full, `<style>\n${result.value.css}\n</style>`);
+    } else {
+      replacements.set(matches[i].full, `<!-- stylesheet failed to load: ${matches[i].url} -->`);
+    }
+  }
+
+  // Apply replacements
+  let result = html;
+  for (const [original, replacement] of replacements) {
+    result = result.replace(original, replacement);
   }
 
   return result;
