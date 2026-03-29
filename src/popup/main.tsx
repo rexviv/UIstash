@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { LibraryBig, Settings2 } from "lucide-react";
+import { Archive, Plus, Settings2, Tag, X } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -89,56 +89,99 @@ function PopupApp() {
 
   return (
     <main className="flex h-full w-full flex-col gap-3 overflow-hidden p-4" style={{ background: "var(--canvas)" }}>
+      {/* 主卡片 */}
       <Card className="glass flex min-h-0 flex-1 flex-col overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/20 pb-4">
-          <CardTitle className="text-[18px] font-semibold tracking-tight" style={{ color: "var(--ink-primary)" }}>UIstash</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/20 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-[var(--accent)]/10">
+              <Archive className="size-4" style={{ color: "var(--accent)" }} />
+            </div>
+            <div>
+              <CardTitle className="text-[16px] font-semibold" style={{ color: "var(--ink-primary)" }}>UIstash</CardTitle>
+              <p className="text-[10px]" style={{ color: "var(--ink-muted)" }}>网页存档工具</p>
+            </div>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => chrome.runtime.openOptionsPage()} disabled={busy} aria-label={"打开管理页"}>
             <Settings2 className="size-4" />
           </Button>
         </CardHeader>
 
         <CardContent className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4">
-          <div className="flex items-center justify-end">
-            <Badge variant={summary?.pendingQueueCount ? "success" : "secondary"}>QUEUE: {summary?.pendingQueueCount ?? 0}</Badge>
+          {/* 状态区 */}
+          <div className="flex items-center justify-between">
+            <Badge variant={summary?.pendingQueueCount ? "success" : "secondary"}>
+              待处理: {summary?.pendingQueueCount ?? 0}
+            </Badge>
+            {summary?.page && <Badge variant="success">已存档</Badge>}
           </div>
 
+          {/* 当前页面信息 */}
           <Card className="bg-white/50 backdrop-blur-md">
             <CardContent className="p-4">
               <div className="mb-2 flex items-start justify-between gap-3">
-                <h2 className="text-base font-semibold leading-snug line-clamp-2" style={{ color: "var(--ink-primary)" }}>{summary?.title || "当前网页"}</h2>
-                {summary?.page ? <Badge variant="success">ARCHIVED</Badge> : null}
+                <h2 className="text-base font-semibold leading-snug line-clamp-2" style={{ color: "var(--ink-primary)" }}>
+                  {summary?.title || "当前网页"}
+                </h2>
               </div>
-              <p className="font-mono text-[11px] line-clamp-2" style={{ color: "var(--ink-muted)" }}>{summary?.url || "当前标签页暂不支持保存"}</p>
+              <p className="font-mono text-[11px] line-clamp-2" style={{ color: "var(--ink-muted)" }}>
+                {summary?.url || "当前标签页暂不支持保存"}
+              </p>
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-2 overflow-hidden">
-            {availableTags.map((tag) => (
-              <Button
-                key={tag.id}
-                type="button"
-                variant={selectedTags.includes(tag.name) ? "outline" : "secondary"}
-                size="sm"
-                className="max-w-full"
-                onClick={() => toggleTag(tag.name)}
-              >
-                <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
-                <span className="truncate">{tag.name}</span>
-              </Button>
-            ))}
+          {/* 标签选择区 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Tag className="size-3.5" style={{ color: "var(--ink-muted)" }} />
+              <span className="text-[11px] font-medium" style={{ color: "var(--ink-secondary)" }}>标签</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleTag(tag.name)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all duration-200 ${
+                    selectedTags.includes(tag.name)
+                      ? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30"
+                      : "bg-white/50 text-[var(--ink-secondary)] border border-white/40 hover:bg-white/80"
+                  }`}
+                >
+                  <span className="size-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                  <span>{tag.name}</span>
+                  {selectedTags.includes(tag.name) && <X className="size-3" />}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <Input value={newTags} onChange={(event) => setNewTags(event.target.value)} placeholder={"> new-tag"} />
+          {/* 新建标签输入 */}
+          <Input
+            value={newTags}
+            onChange={(event) => setNewTags(event.target.value)}
+            placeholder={"添加新标签，按回车分隔"}
+          />
 
           <Separator />
 
-          <Textarea value={pageNote} onChange={(event) => setPageNote(event.target.value)} placeholder={"Note..."} className="min-h-[88px] max-h-[132px] text-[13px]" />
+          {/* 备注 */}
+          <Textarea
+            value={pageNote}
+            onChange={(event) => setPageNote(event.target.value)}
+            placeholder={"为这个页面添加备注..."}
+            className="min-h-[88px] max-h-[120px] text-[13px]"
+          />
         </CardContent>
       </Card>
 
-      <Button onClick={handleSave} disabled={saveDisabled} className="h-12 shrink-0 text-xs uppercase tracking-[0.1em]">
-        <LibraryBig className="size-4" />
-        {"SAVE CURRENT PAGE"}
+      {/* 保存按钮 */}
+      <Button
+        onClick={handleSave}
+        disabled={saveDisabled}
+        className="h-12 shrink-0 text-[13px] font-medium"
+      >
+        <Plus className="size-4" />
+        {summary?.isSupported ? "保存当前页面" : "此页面不支持保存"}
       </Button>
     </main>
   );
