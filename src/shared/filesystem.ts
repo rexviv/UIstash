@@ -64,14 +64,16 @@ export async function writeSnapshotFiles(request: SnapshotWriteRequest): Promise
   const mhtmlPath = `${base}/page.mhtml`;
   const pngPath = `${base}/preview.png`;
   const fullPngPath = `${base}/full-page.png`;
+  const htmlPath = `${base}/page.html`;
   const metaPath = `${base}/meta.json`;
 
   await writeFile(baseDir, "page.mhtml", base64ToBlob(request.mhtmlBase64, request.mhtmlMimeType || "multipart/related"));
   await writeFile(baseDir, "preview.png", await dataUrlToBlob(request.pngDataUrl));
   await writeFile(baseDir, "full-page.png", await dataUrlToBlob(request.fullPagePngDataUrl));
-  await writeFile(baseDir, "meta.json", new Blob([JSON.stringify(buildMeta(request, pngPath, fullPngPath), null, 2)], { type: "application/json" }));
+  await writeFile(baseDir, "page.html", buildPageHtml(request, fullPngPath));
+  await writeFile(baseDir, "meta.json", new Blob([JSON.stringify(buildMeta(request, pngPath, fullPngPath, htmlPath), null, 2)], { type: "application/json" }));
 
-  return { mhtmlPath, pngPath, fullPngPath, metaPath };
+  return { mhtmlPath, pngPath, fullPngPath, htmlPath, metaPath };
 }
 
 export async function scanLibrarySnapshot(): Promise<LibrarySnapshot> {
@@ -95,7 +97,7 @@ export async function scanLibrarySnapshot(): Promise<LibrarySnapshot> {
 
   const metaEntries = await collectMetaEntries(libraryRoot, UISTASH_ROOT);
   const tagMap = new Map<string, TagRecord>();
-  const grouped = new Map<string, Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string }>>();
+  const grouped = new Map<string, Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string; htmlPath: string }>>();
 
   for (const entry of metaEntries) {
     for (const tagName of entry.meta.tags ?? []) {
@@ -144,6 +146,7 @@ export async function scanLibrarySnapshot(): Promise<LibrarySnapshot> {
         capturedAt: item.meta.capturedAt,
         trigger: item.meta.trigger,
         mhtmlPath: item.mhtmlPath,
+        htmlPath: item.meta.htmlPath || item.htmlPath,
         pngPath: item.meta.viewportImagePath,
         fullPngPath: item.meta.fullPageImagePath,
         metaPath: item.metaPath,
@@ -282,15 +285,17 @@ export async function exportLibraryZip(input: {
   const includedVersions = input.versions.filter((version) => pageIds.has(version.pageId));
 
   for (const version of includedVersions) {
-    const [mhtmlFile, pngFile, fullPngFile, metaFile] = await Promise.all([
+    const [mhtmlFile, pngFile, fullPngFile, htmlFile, metaFile] = await Promise.all([
       readSnapshotFile(version.mhtmlPath),
       readSnapshotFile(version.pngPath),
       readSnapshotFile(version.fullPngPath),
+      version.htmlPath ? readSnapshotFile(version.htmlPath) : Promise.resolve(null),
       readSnapshotFile(version.metaPath)
     ]);
     zip.file(version.mhtmlPath, mhtmlFile);
     zip.file(version.pngPath, pngFile);
     zip.file(version.fullPngPath, fullPngFile);
+    if (htmlFile) { zip.file(version.htmlPath, htmlFile); }
     zip.file(version.metaPath, metaFile);
   }
 
@@ -319,8 +324,8 @@ export async function saveZipBlob(blob: Blob, suggestedName: string): Promise<vo
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-async function collectMetaEntries(directory: FileSystemDirectoryHandle, relativePath: string): Promise<Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string }>> {
-  const result: Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string }> = [];
+async function collectMetaEntries(directory: FileSystemDirectoryHandle, relativePath: string): Promise<Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string; htmlPath: string }>> {
+  const result: Array<{ meta: SnapshotFileMeta; metaPath: string; mhtmlPath: string; htmlPath: string }> = [];
   for await (const [name, handle] of directory.entries()) {
     const nextPath = `${relativePath}/${name}`;
     if (handle.kind === "directory") {
@@ -332,7 +337,8 @@ async function collectMetaEntries(directory: FileSystemDirectoryHandle, relative
     }
     const file = await handle.getFile();
     const raw = JSON.parse(await file.text()) as SnapshotFileMeta;
-    result.push({ meta: normalizeMeta(raw, nextPath), metaPath: nextPath, mhtmlPath: `${relativePath}/page.mhtml` });
+    const basePath = nextPath.slice(0, -"/meta.json".length);
+    result.push({ meta: normalizeMeta(raw, nextPath), metaPath: nextPath, mhtmlPath: `${basePath}/page.mhtml`, htmlPath: `${basePath}/page.html` });
   }
   return result;
 }
@@ -480,7 +486,7 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   return new Blob([bytes], { type: mimeType });
 }
 
-function buildMeta(request: SnapshotWriteRequest, pngPath: string, fullPngPath: string): SnapshotFileMeta {
+function buildMeta(request: SnapshotWriteRequest, pngPath: string, fullPngPath: string, htmlPath: string): SnapshotFileMeta {
   const capturedDate = new Date(request.capturedAt);
   return {
     pageId: request.pageId,
@@ -505,8 +511,52 @@ function buildMeta(request: SnapshotWriteRequest, pngPath: string, fullPngPath: 
     versionNote: request.versionNote,
     extractedText: request.extractedText,
     viewportImagePath: pngPath,
-    fullPageImagePath: fullPngPath
+    fullPageImagePath: fullPngPath,
+    htmlPath: htmlPath
   };
+}
+
+function buildPageHtml(request: SnapshotWriteRequest, fullPngPath: string): Blob {
+  const date = new Date(request.capturedAt);
+  const dateStr = new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit"
+  }).format(date);
+  const escapedTitle = request.title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const escapedUrl = request.sourceUrl.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const escapedText = (request.extractedText || "无文本摘录").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapedTitle}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f3f0;color:#1a1a1a;font-size:14px;line-height:1.6;padding:24px}
+  .header{margin-bottom:20px}
+  .title{font-family:Georgia,"PingFang SC",serif;font-size:22px;font-weight:700;margin-bottom:4px;color:#1a1a1a}
+  .meta{font-family:"JetBrains Mono",monospace;font-size:11px;color:#6b6b6b}
+  .screenshot{margin:20px 0;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1)}
+  .screenshot img{max-width:100%;height:auto;display:block}
+  .text-section{margin-top:24px}
+  .text-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6b6b6b;margin-bottom:8px}
+  .text-content{background:#fff;border-radius:8px;padding:16px;font-size:13px;color:#1a1a1a;line-height:1.8;border:1px solid rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="title">${escapedTitle}</div>
+  <div class="meta">${escapedUrl} · ${dateStr}</div>
+</div>
+<div class="screenshot"><img src="${request.fullPagePngDataUrl}" alt="${escapedTitle}"></div>
+<div class="text-section">
+  <div class="text-label">页面文本</div>
+  <div class="text-content">${escapedText}</div>
+</div>
+</body>
+</html>`;
+  return new Blob([html], { type: "text/html" });
 }
 
 function normalizeMeta(meta: SnapshotFileMeta, metaPath: string): SnapshotFileMeta {

@@ -65,8 +65,8 @@ export function App() {
     let currentUrl: string | null = null;
     async function load() {
       try {
-        const file = await readSnapshotFile(previewVersion.mhtmlPath);
-        currentUrl = URL.createObjectURL(new Blob([file], { type: "multipart/related" }));
+        const file = await readSnapshotFile(previewVersion.htmlPath);
+        currentUrl = URL.createObjectURL(new Blob([file], { type: "text/html" }));
         if (!revoked) { setPreviewUrl(currentUrl); }
         else { URL.revokeObjectURL(currentUrl); }
       } catch { if (!revoked) { setPreviewUrl(null); } }
@@ -116,8 +116,8 @@ export function App() {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") { setDirectoryStatus(permission); setStatusMessage("需要重新授权目录"); return; }
     try {
-      const file = await readSnapshotFile(latestVersion.mhtmlPath);
-      const url = URL.createObjectURL(file);
+      const file = await readSnapshotFile(latestVersion.htmlPath);
+      const url = URL.createObjectURL(new Blob([file], { type: "text/html" }));
       await chrome.tabs.create({ url });
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch { setStatusMessage("无法打开存档文件"); }

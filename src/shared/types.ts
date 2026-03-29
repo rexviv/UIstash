@@ -27,6 +27,7 @@ export interface VersionRecord {
   capturedAt: number;
   trigger: CaptureTrigger;
   mhtmlPath: string;
+  htmlPath: string;
   pngPath: string;
   fullPngPath: string;
   metaPath: string;
@@ -125,6 +126,7 @@ export interface SnapshotFileMeta {
   extractedText: string;
   viewportImagePath: string;
   fullPageImagePath: string;
+  htmlPath: string;
 }
 
 export interface SnapshotWriteRequest {
