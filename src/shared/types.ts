@@ -56,10 +56,9 @@ export interface QueuedSnapshotPayload {
   extractedText: string;
   pageNote: string;
   tagNames: string[];
-  mhtmlBase64: string;
-  mhtmlMimeType: string;
   pngDataUrl: string;
   fullPagePngDataUrl: string;
+  archiveHtmlDataUrl: string;
 }
 
 export interface QueueRecord {
@@ -138,10 +137,9 @@ export interface SnapshotWriteRequest {
   title: string;
   capturedAt: number;
   trigger: CaptureTrigger;
-  mhtmlBase64: string;
-  mhtmlMimeType: string;
   pngDataUrl: string;
   fullPagePngDataUrl: string;
+  archiveHtmlDataUrl: string;
   tags: string[];
   pageNote: string;
   versionNote: string;

@@ -143,8 +143,8 @@ async function captureTab(tab: chrome.tabs.Tab, trigger: "manual" | "auto" | "qu
     return { status: "queued", reason: "awaiting-visibility" };
   }
 
-  const [mhtmlBlob, pngDataUrl, fullPagePngDataUrl] = await Promise.all([
-    saveAsMhtml(tab.id),
+  const [archiveHtmlDataUrl, pngDataUrl, fullPagePngDataUrl] = await Promise.all([
+    captureArchiveHtml(tab.id, sourceUrl),
     captureVisiblePng(tab.windowId),
     captureFullPagePng(tab.id, tab.windowId)
   ]);
@@ -158,10 +158,9 @@ async function captureTab(tab: chrome.tabs.Tab, trigger: "manual" | "auto" | "qu
     title: content.title,
     capturedAt,
     trigger,
-    mhtmlBase64: await blobToBase64(mhtmlBlob),
-    mhtmlMimeType: mhtmlBlob.type || DEFAULT_MHTML_MIME,
     pngDataUrl,
     fullPagePngDataUrl,
+    archiveHtmlDataUrl,
     tags: input?.tagNames ?? [],
     pageNote: input?.pageNote ?? "",
     versionNote: "",
@@ -194,10 +193,9 @@ async function captureTab(tab: chrome.tabs.Tab, trigger: "manual" | "auto" | "qu
       extractedText: content.text,
       pageNote: input?.pageNote ?? "",
       tagNames: input?.tagNames ?? [],
-      mhtmlBase64: writeRequest.mhtmlBase64,
-      mhtmlMimeType: writeRequest.mhtmlMimeType,
       pngDataUrl,
-      fullPagePngDataUrl
+      fullPagePngDataUrl,
+      archiveHtmlDataUrl
     };
 
     if (queueId) {
@@ -236,10 +234,9 @@ async function processQueuedCaptures() {
         title: item.snapshotPayload.title,
         capturedAt: item.snapshotPayload.capturedAt,
         trigger: item.snapshotPayload.trigger,
-        mhtmlBase64: item.snapshotPayload.mhtmlBase64,
-        mhtmlMimeType: item.snapshotPayload.mhtmlMimeType,
         pngDataUrl: item.snapshotPayload.pngDataUrl,
         fullPagePngDataUrl: item.snapshotPayload.fullPagePngDataUrl,
+        archiveHtmlDataUrl: item.snapshotPayload.archiveHtmlDataUrl,
         tags: item.snapshotPayload.tagNames,
         pageNote: item.snapshotPayload.pageNote,
         versionNote: "",
@@ -378,16 +375,150 @@ function buildCapturePositions(totalHeight: number, viewportHeight: number): num
   return positions;
 }
 
-async function saveAsMhtml(tabId: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    chrome.pageCapture.saveAsMHTML({ tabId }, (blob) => {
-      if (chrome.runtime.lastError || !blob) {
-        reject(new Error(chrome.runtime.lastError?.message || "Unable to create MHTML snapshot."));
-        return;
+async function captureArchiveHtml(tabId: number, sourceUrl: string): Promise<string> {
+  // Step 1: Get DOM HTML and trigger lazy-loads from tab context
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => {
+      // Swap lazy-load data attributes to trigger loading
+      const lazyImgs = document.querySelectorAll<HTMLImageElement>('img[data-src], img[data-lazy-src]');
+      for (const img of lazyImgs) {
+        const lazySrc = img.getAttribute('data-src') || img.getAttribute('data-lazy-src');
+        if (lazySrc) { img.src = lazySrc; }
       }
-      resolve(blob);
-    });
+      return {
+        html: document.documentElement.outerHTML,
+        url: location.href
+      };
+    }
   });
+  const { html: pageHtml } = (result.result as { html: string; url: string }) ?? { html: "", url: sourceUrl };
+
+  // Step 2: Collect and inline external images as data URIs
+  const htmlWithInlinedImages = await inlineImagesToDataUrls(pageHtml, sourceUrl);
+
+  // Step 3: Wrap with archive header and return as data URL
+  const date = new Date();
+  const dateStr = new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit"
+  }).format(date);
+  const escapedTitle = (result.result as { html: string; url: string } | undefined)?.url ?? sourceUrl;
+  const archiveHtml = buildArchiveHtml(htmlWithInlinedImages, sourceUrl, dateStr);
+
+  return "data:text/html;charset=UTF-8," + encodeURIComponent(archiveHtml);
+}
+
+async function inlineImagesToDataUrls(html: string, baseUrl: string): Promise<string> {
+  // Parse img src attributes from HTML string using regex
+  // For each external image URL, try to fetch it and convert to data URI
+  // Replace the src with data URI if fetch succeeds, otherwise keep original URL
+
+  const imgSrcRegex = /<img[^>]+src=["']([^"']+)["']/gi;
+  const matches: Array<{ full: string; url: string }> = [];
+  let match: RegExpExecArray | null;
+  while ((match = imgSrcRegex.exec(html)) !== null) {
+    const url = match[1];
+    if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("javascript:") || url.startsWith("mailto:")) continue;
+    if (url.startsWith("//")) {
+      matches.push({ full: match[0], url: "https:" + url });
+    } else if (url.startsWith("/")) {
+      try {
+        const base = new URL(baseUrl);
+        matches.push({ full: match[0], url: base.origin + url });
+      } catch { continue; }
+    } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      try {
+        const base = new URL(baseUrl);
+        matches.push({ full: match[0], url: new URL(url, base).href });
+      } catch { continue; }
+    } else {
+      matches.push({ full: match[0], url });
+    }
+  }
+
+  if (matches.length === 0) return html;
+
+  // Fetch all images in parallel
+  const results = await Promise.allSettled(
+    matches.map(async ({ url }) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const arrayBuffer = await response.arrayBuffer();
+        const contentType = response.headers.get("Content-Type") || "image/png";
+        const base64 = arrayBufferToBase64(arrayBuffer);
+        return { originalUrl: url, dataUrl: `data:${contentType};base64,${base64}` };
+      } catch {
+        return { originalUrl: url, dataUrl: url }; // fallback to original URL
+      }
+    })
+  );
+
+  // Build replacement map
+  const replacements = new Map<string, string>();
+  for (let i = 0; i < matches.length; i++) {
+    const result = results[i];
+    if (result.status === "fulfilled") {
+      replacements.set(matches[i].url, result.value.dataUrl);
+    }
+  }
+
+  // Apply replacements
+  let result = html;
+  for (const [originalUrl, dataUrl] of replacements) {
+    if (dataUrl !== originalUrl) {
+      const escapedOriginal = originalUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escapedDataUrl = dataUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result.replace(new RegExp(`src=["']${escapedOriginal}["']`, "gi"), `src="${dataUrl}"`);
+      // Also handle already-encoded URLs
+      result = result.replace(new RegExp(`src=["']${escapedDataUrl}["']`, "gi"), `src="${dataUrl}"`);
+    }
+  }
+
+  return result;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function buildArchiveHtml(bodyHtml: string, sourceUrl: string, capturedAt: string): string {
+  // Extract just the <body> content or use full HTML
+  const bodyMatch = bodyHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const innerBody = bodyMatch ? bodyMatch[1] : bodyHtml;
+
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>存档: ${new URL(sourceUrl).hostname}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Microsoft YaHei",sans-serif;background:#f5f3f0;color:#1a1a1a;font-size:14px;line-height:1.6}
+  .archive-bar{background:#fff;border-bottom:1px solid rgba(0,0,0,.1);padding:8px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:9999;font-size:12px}
+  .archive-bar .label{background:#b86f41;color:#fff;border-radius:4px;padding:2px 6px;font-weight:600;font-size:11px}
+  .archive-bar .url{color:#6b6b6b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:11px}
+  .archive-bar .date{color:#999;font-size:11px;white-space:nowrap}
+  .archive-bar a{color:#1a1a1a;text-decoration:none}
+  .archive-bar a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="archive-bar">
+  <span class="label">存档</span>
+  <a href="${sourceUrl}" target="_blank" title="访问原始网页" class="url">${sourceUrl}</a>
+  <span class="date">${capturedAt}</span>
+</div>
+${innerBody}
+</body>
+</html>`;
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {

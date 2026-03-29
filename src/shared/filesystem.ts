@@ -64,7 +64,7 @@ export async function writeSnapshotFiles(request: SnapshotWriteRequest): Promise
 
   await writeFile(baseDir, "preview.png", await dataUrlToBlob(request.pngDataUrl));
   await writeFile(baseDir, "full-page.png", await dataUrlToBlob(request.fullPagePngDataUrl));
-  await writeFile(baseDir, "page.html", buildPageHtml(request, fullPngPath));
+  await writeFile(baseDir, "page.html", dataUrlToBlob(request.archiveHtmlDataUrl));
   await writeFile(baseDir, "meta.json", new Blob([JSON.stringify(buildMeta(request, pngPath, fullPngPath, htmlPath), null, 2)], { type: "application/json" }));
 
   return { pngPath, fullPngPath, htmlPath, metaPath };
@@ -458,15 +458,18 @@ async function writeFile(handle: FileSystemDirectoryHandle, fileName: string, da
 }
 
 async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
-  if (!dataUrl || !dataUrl.startsWith("data:image/")) {
-    throw new Error("INVALID_PNG_PAYLOAD");
+  if (!dataUrl) {
+    throw new Error("INVALID_DATA_URL");
   }
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
-  if (blob.size === 0) {
-    throw new Error("INVALID_PNG_PAYLOAD");
+  if (dataUrl.startsWith("data:image/") || dataUrl.startsWith("data:text/")) {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    if (blob.size === 0) {
+      throw new Error("INVALID_DATA_URL");
+    }
+    return blob;
   }
-  return blob;
+  throw new Error("INVALID_DATA_URL");
 }
 
 function base64ToBlob(base64: string, mimeType: string): Blob {
