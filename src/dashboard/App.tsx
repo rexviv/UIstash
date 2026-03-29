@@ -1,7 +1,7 @@
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   Archive, ExternalLink, Eye, FolderOpen, Globe, ImageIcon, RefreshCw,
-  Search, Settings2, Trash2, FileText, GalleryVerticalEnd, MoreHorizontal, Plus, X
+  Search, Settings2, Trash2, GalleryVerticalEnd, MoreHorizontal, Plus, X
 } from "lucide-react";
 import { db } from "../shared/db";
 import {
@@ -69,7 +69,15 @@ export function App() {
         currentUrl = URL.createObjectURL(new Blob([file], { type: "text/html" }));
         if (!revoked) { setPreviewUrl(currentUrl); }
         else { URL.revokeObjectURL(currentUrl); }
-      } catch { if (!revoked) { setPreviewUrl(null); } }
+      } catch {
+        // htmlPath不存在时（旧存档），fallback到mhtmlPath
+        try {
+          const file = await readSnapshotFile(previewVersion.mhtmlPath);
+          currentUrl = URL.createObjectURL(new Blob([file], { type: "multipart/related" }));
+          if (!revoked) { setPreviewUrl(currentUrl); }
+          else { URL.revokeObjectURL(currentUrl); }
+        } catch { if (!revoked) { setPreviewUrl(null); } }
+      }
     }
     void load();
     return () => { revoked = true; if (currentUrl) { URL.revokeObjectURL(currentUrl); } };
@@ -116,8 +124,16 @@ export function App() {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") { setDirectoryStatus(permission); setStatusMessage("需要重新授权目录"); return; }
     try {
-      const file = await readSnapshotFile(latestVersion.htmlPath);
-      const url = URL.createObjectURL(new Blob([file], { type: "text/html" }));
+      let file;
+      let contentType = "text/html";
+      try {
+        file = await readSnapshotFile(latestVersion.htmlPath);
+      } catch {
+        // htmlPath不存在时（旧存档），fallback到mhtmlPath
+        file = await readSnapshotFile(latestVersion.mhtmlPath);
+        contentType = "multipart/related";
+      }
+      const url = URL.createObjectURL(new Blob([file], { type: contentType }));
       await chrome.tabs.create({ url });
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch { setStatusMessage("无法打开存档文件"); }
@@ -157,10 +173,10 @@ export function App() {
   async function handleSaveVersionNote(version: VersionRecord, note: string) {
     await updateVersionMetadataOnDisk(version.id, { note }); setStatusMessage("备注已保存"); await reloadLibrary(version.pageId);
   }
-  async function handleOpenFile(version: VersionRecord, kind: "mhtml" | "png" | "full") {
+  async function handleOpenFile(version: VersionRecord, kind: "png" | "full") {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") { setDirectoryStatus(permission); setStatusMessage("目录需要重新授权"); return; }
-    const targetPath = kind === "mhtml" ? version.mhtmlPath : kind === "full" ? version.fullPngPath : version.pngPath;
+    const targetPath = kind === "full" ? version.fullPngPath : version.pngPath;
     try { const file = await readSnapshotFile(targetPath); const url = URL.createObjectURL(file); await chrome.tabs.create({ url }); setTimeout(() => URL.revokeObjectURL(url), 60_000); } catch { setStatusMessage("本地文件不存在或无法读取"); }
   }
   async function handleDeleteVersion(version: VersionRecord) {
@@ -282,7 +298,7 @@ export function App() {
               </div>
               <div className="flex-1 overflow-y-auto bg-white">
                 {previewUrl ? (
-                  <iframe src={previewUrl} className="w-full h-full min-h-[70vh] border-0" title="MHTML preview" />
+                  <iframe src={previewUrl} className="w-full h-full min-h-[70vh] border-0" title="存档预览" />
                 ) : previewVersion ? (
                   <div className="flex items-center justify-center h-64">
                     <RefreshCw className="size-8 animate-spin text-[var(--text-muted)]" />
@@ -367,7 +383,7 @@ export function App() {
               <p className="mt-1 font-mono text-[11px]" style={{ color: "var(--text-muted)" }}>{safeHost(selectedPage.latestUrl)} · {formatTime(selectedPage.capturedAt)}</p>
             </div>
 
-            {/* 打开 MHTML 按钮 */}
+            {/* 在新标签页查看存档 */}
             <div className="px-5 pt-3">
               <Button onClick={() => void handleOpenPageInNewTab(selectedPage)} className="w-full gap-2" variant="secondary">
                 <ExternalLink className="size-4" />在新标签页查看存档网页
@@ -426,7 +442,6 @@ export function App() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => void handleOpenFile(version, "png")}><ImageIcon className="size-3.5" />截图</DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => void handleOpenFile(version, "full")}><GalleryVerticalEnd className="size-3.5" />全页截图</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => void handleOpenFile(version, "mhtml")}><FileText className="size-3.5" />MHTML</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem variant="destructive" onSelect={() => void handleDeleteVersion(version)}><Trash2 className="size-3.5" />删除</DropdownMenuItem>
                               </DropdownMenuContent>

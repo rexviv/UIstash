@@ -55,25 +55,19 @@ export async function writeSnapshotFiles(request: SnapshotWriteRequest): Promise
     throw new Error("DIRECTORY_PERMISSION_REQUIRED");
   }
 
-  if (!request.mhtmlBase64 || typeof request.mhtmlBase64 !== "string") {
-    throw new Error("INVALID_MHTML_PAYLOAD");
-  }
-
   const base = buildSnapshotRelativeBase(request.normalizedUrl, request.capturedAt);
   const baseDir = await ensureRelativeDirectory(root, base);
-  const mhtmlPath = `${base}/page.mhtml`;
   const pngPath = `${base}/preview.png`;
   const fullPngPath = `${base}/full-page.png`;
   const htmlPath = `${base}/page.html`;
   const metaPath = `${base}/meta.json`;
 
-  await writeFile(baseDir, "page.mhtml", base64ToBlob(request.mhtmlBase64, request.mhtmlMimeType || "multipart/related"));
   await writeFile(baseDir, "preview.png", await dataUrlToBlob(request.pngDataUrl));
   await writeFile(baseDir, "full-page.png", await dataUrlToBlob(request.fullPagePngDataUrl));
   await writeFile(baseDir, "page.html", buildPageHtml(request, fullPngPath));
   await writeFile(baseDir, "meta.json", new Blob([JSON.stringify(buildMeta(request, pngPath, fullPngPath, htmlPath), null, 2)], { type: "application/json" }));
 
-  return { mhtmlPath, pngPath, fullPngPath, htmlPath, metaPath };
+  return { pngPath, fullPngPath, htmlPath, metaPath };
 }
 
 export async function scanLibrarySnapshot(): Promise<LibrarySnapshot> {
@@ -285,14 +279,12 @@ export async function exportLibraryZip(input: {
   const includedVersions = input.versions.filter((version) => pageIds.has(version.pageId));
 
   for (const version of includedVersions) {
-    const [mhtmlFile, pngFile, fullPngFile, htmlFile, metaFile] = await Promise.all([
-      readSnapshotFile(version.mhtmlPath),
+    const [pngFile, fullPngFile, htmlFile, metaFile] = await Promise.all([
       readSnapshotFile(version.pngPath),
       readSnapshotFile(version.fullPngPath),
       version.htmlPath ? readSnapshotFile(version.htmlPath) : Promise.resolve(null),
       readSnapshotFile(version.metaPath)
     ]);
-    zip.file(version.mhtmlPath, mhtmlFile);
     zip.file(version.pngPath, pngFile);
     zip.file(version.fullPngPath, fullPngFile);
     if (htmlFile) { zip.file(version.htmlPath, htmlFile); }

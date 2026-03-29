@@ -149,9 +149,9 @@ export interface SnapshotWriteRequest {
 }
 
 export interface SnapshotWriteResult {
-  mhtmlPath: string;
   pngPath: string;
   fullPngPath: string;
+  htmlPath: string;
   metaPath: string;
 }
 
