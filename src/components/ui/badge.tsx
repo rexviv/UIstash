@@ -3,15 +3,20 @@ import type * as React from "react";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-[var(--radius-full)] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.06em] transition-all duration-200",
+  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium transition-all duration-200",
   {
     variants: {
       variant: {
-        default: "bg-white/70 text-[var(--ink-secondary)] border border-white/50 backdrop-blur-md shadow-[0_1px_3px_rgba(0,0,0,0.08)]",
-        secondary: "bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20",
-        outline: "bg-transparent text-[var(--ink-muted)] border border-[var(--ink-ghost)]/50",
-        success: "bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success)]/30",
-        destructive: "bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/30"
+        // 默认标签 — 透明底，炭灰边框
+        default: "bg-transparent text-[var(--text-secondary)] border border-[var(--charcoal)]/20",
+        // 次要标签 — 柔和填充
+        secondary: "bg-[var(--charcoal)]/8 text-[var(--text-secondary)] border border-transparent",
+        // 轮廓标签
+        outline: "bg-transparent text-[var(--text-muted)] border border-[var(--charcoal)]/15",
+        // 成功标签
+        success: "bg-[var(--success-soft)] text-[var(--success)] border border-[var(--success)]/20",
+        // 危险标签
+        destructive: "bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/20",
       }
     },
     defaultVariants: {
