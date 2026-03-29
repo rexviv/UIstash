@@ -3,15 +3,15 @@ import type * as React from "react";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors duration-150",
+  "inline-flex items-center border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.05em] transition-colors",
   {
     variants: {
       variant: {
-        default: "px-2.5 py-1 rounded-[20px] bg-[var(--bg-sunken)] text-[var(--ink-secondary)] border border-[var(--border-default)]",
-        secondary: "px-2.5 py-1 rounded-[20px] bg-[var(--bg-sunken)] text-[var(--ink-tertiary)] border border-[var(--border-subtle)]",
-        accent: "px-2.5 py-1 rounded-[20px] bg-[var(--accent-soft)] text-[var(--ink-primary)] border border-[rgba(196,168,130,0.2)]",
-        success: "px-2.5 py-1 rounded-[20px] bg-[var(--success-soft)] text-[var(--success)] border border-[rgba(74,124,90,0.15)]",
-        danger: "px-2.5 py-1 rounded-[20px] bg-[var(--danger-soft)] text-[var(--danger)] border border-[rgba(180,74,58,0.15)]"
+        default: "border-[#333333] bg-[#1a1a1a] text-[#e8e8e8]",
+        secondary: "border-[#2a2a2a] bg-[#181818] text-[#888888]",
+        outline: "border-[#2a2a2a] bg-transparent text-[#888888]",
+        success: "border-[#00ff88] bg-[#0a1f14] text-[#00ff88]",
+        destructive: "border-[#ff6b35] bg-[#1a0a08] text-[#ff6b35]"
       }
     },
     defaultVariants: {

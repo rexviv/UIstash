@@ -16,10 +16,7 @@ function DropdownMenuContent({ className, sideOffset = 6, ...props }: React.Comp
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
-        className={cn(
-          "z-50 min-w-[180px] overflow-hidden rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-1.5 shadow-[var(--shadow-md)]",
-          className
-        )}
+        className={cn("z-50 min-w-44 overflow-hidden border border-[#2a2a2a] bg-[#0f0f0f] p-1 text-[#888888]", className)}
         {...props}
       />
     </DropdownMenuPrimitive.Portal>
@@ -30,9 +27,9 @@ function DropdownMenuItem({ className, inset, variant = "default", ...props }: R
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-[8px] px-3 py-2 text-[13px] text-[var(--ink-secondary)] outline-none transition-all duration-100 data-[highlighted]:bg-[var(--bg-subtle)] data-[highlighted]:text-[var(--ink-primary)]",
+        "relative flex cursor-default select-none items-center gap-2 px-3 py-2 text-sm outline-none transition-colors data-[highlighted]:bg-[#1a1a1a] data-[highlighted]:text-[#e8e8e8]",
         inset && "pl-8",
-        variant === "destructive" && "text-[var(--danger)] data-[highlighted]:bg-[var(--danger-soft)]",
+        variant === "destructive" && "text-[#ff6b35] data-[highlighted]:bg-[#1a0a08] data-[highlighted]:text-[#ff6b35]",
         className
       )}
       {...props}
@@ -41,17 +38,17 @@ function DropdownMenuItem({ className, inset, variant = "default", ...props }: R
 }
 
 function DropdownMenuLabel({ className, inset, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & { inset?: boolean }) {
-  return <DropdownMenuPrimitive.Label className={cn("px-3 py-2 text-[11px] font-medium text-[var(--ink-tertiary)] uppercase tracking-[0.06em]", inset && "pl-8", className)} {...props} />;
+  return <DropdownMenuPrimitive.Label className={cn("px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-[#555555]", inset && "pl-8", className)} {...props} />;
 }
 
 function DropdownMenuSeparator({ className, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
-  return <DropdownMenuPrimitive.Separator className={cn("-mx-1 my-1 h-px bg-[var(--border-default)]", className)} {...props} />;
+  return <DropdownMenuPrimitive.Separator className={cn("-mx-1 my-1 h-px bg-[#2a2a2a]", className)} {...props} />;
 }
 
 function DropdownMenuCheckboxItem({ className, children, checked, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
   return (
     <DropdownMenuPrimitive.CheckboxItem
-      className={cn("relative flex cursor-pointer select-none items-center rounded-[8px] py-2 pl-8 pr-3 text-[13px] text-[var(--ink-secondary)] outline-none transition-colors data-[highlighted]:bg-[var(--bg-subtle)]", className)}
+      className={cn("relative flex cursor-default select-none items-center py-2 pl-8 pr-3 text-sm outline-none transition-colors data-[highlighted]:bg-[#1a1a1a] data-[highlighted]:text-[#e8e8e8]", className)}
       checked={checked}
       {...props}
     >
@@ -72,7 +69,7 @@ function DropdownMenuRadioGroup(props: React.ComponentProps<typeof DropdownMenuP
 function DropdownMenuRadioItem({ className, children, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
   return (
     <DropdownMenuPrimitive.RadioItem
-      className={cn("relative flex cursor-pointer select-none items-center rounded-[8px] py-2 pl-8 pr-3 text-[13px] text-[var(--ink-secondary)] outline-none transition-colors data-[highlighted]:bg-[var(--bg-subtle)]", className)}
+      className={cn("relative flex cursor-default select-none items-center py-2 pl-8 pr-3 text-sm outline-none transition-colors data-[highlighted]:bg-[#1a1a1a] data-[highlighted]:text-[#e8e8e8]", className)}
       {...props}
     >
       <span className="absolute left-3 flex size-3.5 items-center justify-center">
@@ -92,22 +89,17 @@ function DropdownMenuSub(props: React.ComponentProps<typeof DropdownMenuPrimitiv
 function DropdownMenuSubTrigger({ className, inset, children, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & { inset?: boolean }) {
   return (
     <DropdownMenuPrimitive.SubTrigger
-      className={cn("flex cursor-pointer select-none items-center rounded-[8px] px-3 py-2 text-[13px] text-[var(--ink-secondary)] outline-none data-[state=open]:bg-[var(--bg-subtle)]", inset && "pl-8", className)}
+      className={cn("flex cursor-default select-none items-center px-3 py-2 text-sm outline-none data-[state=open]:bg-[#1a1a1a] data-[state=open]:text-[#e8e8e8]", inset && "pl-8", className)}
       {...props}
     >
       {children}
-      <ChevronRight className="ml-auto size-3.5" />
+      <ChevronRight className="ml-auto size-4" />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }
 
 function DropdownMenuSubContent({ className, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
-  return (
-    <DropdownMenuPrimitive.SubContent
-      className={cn("z-50 min-w-[160px] overflow-hidden rounded-[12px] border border-[var(--border-default)] bg-[var(--bg-elevated)] p-1.5 shadow-[var(--shadow-md)]", className)}
-      {...props}
-    />
-  );
+  return <DropdownMenuPrimitive.SubContent className={cn("z-50 min-w-40 overflow-hidden border border-[#2a2a2a] bg-[#0f0f0f] p-1 text-[#888888]", className)} {...props} />;
 }
 
 export {

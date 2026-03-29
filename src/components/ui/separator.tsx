@@ -7,7 +7,7 @@ function Separator({ className, orientation = "horizontal", decorative = true, .
     <SeparatorPrimitive.Root
       decorative={decorative}
       orientation={orientation}
-      className={cn("shrink-0 bg-[var(--border-default)]", orientation === "horizontal" ? "h-px w-full" : "h-full w-px", className)}
+      className={cn("shrink-0 bg-[#2a2a2a]", orientation === "horizontal" ? "h-px w-full" : "h-full w-px", className)}
       {...props}
     />
   );
