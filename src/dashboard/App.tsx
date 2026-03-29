@@ -276,25 +276,25 @@ export function App() {
   }
 
   return (
-    <div className="grid h-screen overflow-hidden grid-cols-[288px_minmax(520px,1fr)_420px] bg-[#080808] max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:grid-cols-1">
+    <div className="grid h-screen overflow-hidden grid-cols-[288px_minmax(520px,1fr)_420px] max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:grid-cols-1" style={{ background: "var(--canvas)" }}>
       {/* Column 1: Sidebar */}
-      <aside className="grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden border-r border-[#2a2a2a] bg-[#080808] p-5 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-r-0 max-[1180px]:border-b max-[1180px]:p-4">
+      <aside className="glass-subtle grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-5 overflow-hidden border-r border-white/20 p-5 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-r-0 max-[1180px]:border-b max-[1180px]:p-4">
         <div>
-          <h1 className="font-serif text-[28px] font-bold tracking-tight text-[#e8e8e8]">UIstash</h1>
+          <h1 className="text-[24px] font-bold tracking-tight" style={{ color: "var(--ink-primary)" }}>UIstash</h1>
         </div>
 
-        <Card className="min-h-0 border-[#1a1a1a] bg-[#0a0a0a]">
+        <Card className="glass min-h-0">
           <CardContent className="min-h-0 pt-5">
             <ScrollArea className="h-full pr-3 max-[1180px]:h-auto">
               <div className="mb-4">
-                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#555555]">PAGES</p>
+                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: "var(--ink-muted)" }}>PAGES</p>
                 <Button variant={selectedTagId ? "secondary" : "outline"} className="w-full justify-between" onClick={() => setSelectedTagId(null)}>
                   <span className="font-mono text-xs">All Pages</span>
                   <Badge variant="secondary">{library.pages.length}</Badge>
                 </Button>
               </div>
               <div className="grid gap-2 pb-2">
-                <p className="mb-3 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#555555]">TAGS</p>
+                <p className="mb-3 mt-4 text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: "var(--ink-muted)" }}>TAGS</p>
                 {library.tags.map((tag) => (
                   <Button
                     key={tag.id}
@@ -303,7 +303,7 @@ export function App() {
                     onClick={() => setSelectedTagId(tag.id)}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="size-2 shrink-0" style={{ backgroundColor: tag.color }} />
+                      <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
                       <span className="font-mono text-xs">{tag.name}</span>
                     </span>
                     <Badge variant="secondary">{countPagesForTag(library.pages, tag.id)}</Badge>
@@ -321,16 +321,16 @@ export function App() {
               <span className="font-mono text-xs uppercase tracking-wider">Settings</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="border-[#333333] bg-[#0f0f0f] p-0 sm:max-w-[720px]">
+          <DialogContent className="sm:max-w-[720px]">
             <DialogHeader className="px-6 pt-6">
               <DialogTitle>Settings</DialogTitle>
             </DialogHeader>
             <Separator />
             <div className="grid gap-6 px-6 pb-6">
-              <Card className="border-[#1a1a1a] bg-[#0a0a0a]">
+              <Card className="bg-white/50 backdrop-blur-md">
                 <CardContent className="grid gap-1 p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[#555555]">LOCAL STORAGE</p>
-                  <p className="font-mono text-sm text-[#e8e8e8]">{statusText(directoryStatus)}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.05em]" style={{ color: "var(--ink-muted)" }}>LOCAL STORAGE</p>
+                  <p className="font-mono text-sm" style={{ color: "var(--ink-primary)" }}>{statusText(directoryStatus)}</p>
                 </CardContent>
               </Card>
 
@@ -353,7 +353,7 @@ export function App() {
                 </Button>
               </div>
 
-              {statusMessage ? <p className="font-mono text-xs text-[#888888]">{statusMessage}</p> : null}
+              {statusMessage ? <p className="font-mono text-xs" style={{ color: "var(--ink-secondary)" }}>{statusMessage}</p> : null}
 
               {library.queue.length > 0 ? (
                 <>
@@ -361,12 +361,12 @@ export function App() {
                   <ScrollArea className="max-h-[320px] pr-3">
                     <div className="grid gap-3">
                       {library.queue.map((item) => (
-                        <Card key={item.id} className="border-[#1a1a1a] bg-[#0a0a0a]">
+                        <Card key={item.id} className="bg-white/50 backdrop-blur-md">
                           <CardContent className="grid gap-3 p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="font-semibold tracking-[-0.02em] text-[#e8e8e8]">{item.title}</p>
-                                <p className="mt-1 font-mono text-xs text-[#888888]">{item.reason}</p>
+                                <p className="font-semibold tracking-[-0.02em]" style={{ color: "var(--ink-primary)" }}>{item.title}</p>
+                                <p className="mt-1 font-mono text-xs" style={{ color: "var(--ink-secondary)" }}>{item.reason}</p>
                               </div>
                               <Button variant="destructive" size="sm" onClick={() => void handleDeleteQueueItem(item.id)}>
                                 <Trash2 className="size-4" />
@@ -386,13 +386,13 @@ export function App() {
       </aside>
 
       {/* Column 2: Main Content */}
-      <main className="grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden bg-[#080808] p-6 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:p-4">
-        <Card className="border-[#1a1a1a] bg-[#0a0a0a]">
+      <main className="grid h-screen min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden p-6 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:p-4" style={{ background: "var(--canvas)" }}>
+        <Card className="glass">
           <CardContent className="flex items-end justify-between gap-4 p-5 max-[860px]:flex-col max-[860px]:items-stretch">
-            <CardTitle className="font-serif text-[22px]">{selectedTagId ? library.tags.find((tag) => tag.id === selectedTagId)?.name || "All Pages" : "All Pages"}</CardTitle>
+            <CardTitle className="text-[18px]">{selectedTagId ? library.tags.find((tag) => tag.id === selectedTagId)?.name || "All Pages" : "All Pages"}</CardTitle>
             <div className="w-full max-w-[380px]">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#555555]" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2" style={{ color: "var(--ink-muted)" }} />
                 <Input className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={"> search..."} />
               </div>
             </div>
@@ -402,9 +402,9 @@ export function App() {
         <ScrollArea className="h-full pr-3">
           <div className="grid gap-4 pb-4">
             {results.length === 0 ? (
-              <Card className="h-full border-dashed border-[#2a2a2a] bg-[#0a0a0a]">
+              <Card className="h-full border-dashed bg-white/30 backdrop-blur-md">
                 <CardContent className="grid min-h-[220px] place-items-center p-6 text-center">
-                  <p className="font-mono text-sm text-[#555555]">{"NO RESULTS"}</p>
+                  <p className="font-mono text-sm" style={{ color: "var(--ink-muted)" }}>{"NO RESULTS"}</p>
                 </CardContent>
               </Card>
             ) : null}
@@ -412,15 +412,15 @@ export function App() {
               const latestVersion = result.latestVersion;
               const thumbnailUrl = thumbnailUrls[result.page.id];
               return (
-                <button key={result.page.id} type="button" className="text-left" onClick={() => setSelectedPageId(result.page.id)}>
-                  <Card className={selectedPage?.id === result.page.id ? "border-[#00ff88]/30 bg-[#0f0f0f]" : "border-[#1a1a1a] bg-[#0a0a0a]"}>
+                <button key={result.page.id} type="button" className="text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]" onClick={() => setSelectedPageId(result.page.id)}>
+                  <Card className={selectedPage?.id === result.page.id ? "border-[var(--accent)]/40 bg-white/80 backdrop-blur-xl" : "glass-subtle"}>
                     <CardContent className="grid grid-cols-[168px_1fr] gap-4 p-4 max-[760px]:grid-cols-1">
-                      <div className="relative overflow-hidden border border-[#1a1a1a] bg-[#0a0a0a]">
+                      <div className="relative overflow-hidden rounded-[var(--radius-sm)] bg-white/50 backdrop-blur-md">
                         {thumbnailUrl ? (
                           <img src={thumbnailUrl} alt={result.page.title} className="h-[116px] w-full object-cover" />
                         ) : (
                           <div className="grid h-[116px] place-items-center">
-                            <p className="font-mono text-[10px] uppercase tracking-wider text-[#555555]">NO THUMBNAIL</p>
+                            <p className="font-mono text-[10px] uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>NO THUMBNAIL</p>
                           </div>
                         )}
                       </div>
@@ -428,14 +428,14 @@ export function App() {
                       <div className="grid gap-3">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
-                            <h3 className="line-clamp-2 font-serif text-lg font-semibold tracking-tight text-[#e8e8e8]">{result.page.title}</h3>
-                            <p className="mt-1 font-mono text-[11px] text-[#555555]">{safeHost(result.page.latestUrl)}</p>
+                            <h3 className="line-clamp-2 text-[15px] font-semibold tracking-tight" style={{ color: "var(--ink-primary)" }}>{result.page.title}</h3>
+                            <p className="mt-1 font-mono text-[11px]" style={{ color: "var(--ink-muted)" }}>{safeHost(result.page.latestUrl)}</p>
                           </div>
                           <Badge variant="secondary" className="font-mono text-[10px]">{result.page.versionCount} v</Badge>
                         </div>
-                        <p className="line-clamp-2 text-sm leading-6 text-[#888888]">{result.matchedVersions[0]?.snippet || result.page.note || "No excerpt"}</p>
+                        <p className="line-clamp-2 text-sm" style={{ color: "var(--ink-secondary)" }}>{result.matchedVersions[0]?.snippet || result.page.note || "No excerpt"}</p>
                         <div className="flex items-end justify-between gap-3 max-[760px]:flex-col max-[760px]:items-start">
-                          <p className="font-mono text-[10px] text-[#555555]">{latestVersion ? formatTime(latestVersion.capturedAt) : "NO VERSION"}</p>
+                          <p className="font-mono text-[10px]" style={{ color: "var(--ink-muted)" }}>{latestVersion ? formatTime(latestVersion.capturedAt) : "NO VERSION"}</p>
                           <div className="flex flex-wrap gap-2">
                             {result.tagNames.map((tagName) => (
                               <Badge key={tagName} variant="secondary" className="font-mono text-[10px]">{tagName}</Badge>
@@ -453,25 +453,25 @@ export function App() {
       </main>
 
       {/* Column 3: Detail Panel */}
-      <section className="h-screen overflow-hidden border-l border-[#2a2a2a] bg-[#0a0a0a] p-5 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-l-0 max-[1180px]:border-t max-[1180px]:p-4">
+      <section className="glass-subtle h-screen overflow-hidden border-l border-white/20 p-5 max-[1180px]:h-auto max-[1180px]:overflow-visible max-[1180px]:border-l-0 max-[1180px]:border-t max-[1180px]:p-4">
         {selectedPage ? (
           <div className="grid h-full min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-4">
-            <Card className="border-[#1a1a1a] bg-[#0f0f0f]">
+            <Card className="glass">
               <CardHeader className="gap-3 pb-4">
                 <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="font-serif text-[20px] leading-tight">{selectedPage.title}</CardTitle>
+                  <CardTitle className="text-[16px] leading-tight" style={{ color: "var(--ink-primary)" }}>{selectedPage.title}</CardTitle>
                   <Button variant="destructive" size="sm" onClick={() => void handleDeletePage(selectedPage)} disabled={busy}>
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
-                <a href={selectedPage.latestUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-mono text-[11px] text-[#888888] hover:text-[#00ff88]">
+                <a href={selectedPage.latestUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-mono text-[11px] transition-colors hover:text-[var(--accent)]" style={{ color: "var(--ink-secondary)" }}>
                   <span className="line-clamp-2">{selectedPage.latestUrl}</span>
                   <ExternalLink className="size-3 shrink-0" />
                 </a>
               </CardHeader>
             </Card>
 
-            <Card className="border-[#1a1a1a] bg-[#0f0f0f]">
+            <Card className="glass">
               <CardContent className="p-5">
                 <Textarea
                   value={pageNoteDraft}
@@ -486,7 +486,7 @@ export function App() {
               </CardContent>
             </Card>
 
-            <Card className="border-[#1a1a1a] bg-[#0f0f0f]">
+            <Card className="glass">
               <CardContent className="grid gap-4 p-5">
                 <div className="flex flex-wrap gap-2">
                   {library.tags.map((tag) => (
@@ -498,7 +498,7 @@ export function App() {
                       className="max-w-full"
                       onClick={() => void toggleTagForSelectedPage(tag.id)}
                     >
-                      <span className="size-2 shrink-0" style={{ backgroundColor: tag.color }} />
+                      <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
                       <span className="font-mono text-[10px]">{tag.name}</span>
                     </Button>
                   ))}
@@ -512,17 +512,17 @@ export function App() {
               </CardContent>
             </Card>
 
-            <Card className="border-[#1a1a1a] bg-[#0f0f0f]">
+            <Card className="glass">
               <CardContent className="p-5">
                 <ScrollArea className="h-full pr-3 max-[1180px]:h-auto">
                   <div className="grid gap-4">
                     {selectedVersions.map((version) => {
                       const matched = selectedResult?.matchedVersions.find((item) => item.version.id === version.id);
                       return (
-                        <Card key={version.id} className="border-[#1a1a1a] bg-[#0a0a0a]">
+                        <Card key={version.id} className="glass-subtle">
                           <CardContent className="grid gap-4 p-4">
                             <div className="flex items-start justify-between gap-3 max-[760px]:flex-col">
-                              <p className="font-mono text-sm text-[#e8e8e8]">{formatTime(version.capturedAt)}</p>
+                              <p className="font-mono text-sm" style={{ color: "var(--ink-primary)" }}>{formatTime(version.capturedAt)}</p>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="secondary" size="icon" aria-label={"版本操作"}>
@@ -550,7 +550,7 @@ export function App() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                            <p className="text-sm leading-6 text-[#888888]">{matched?.snippet || version.extractedText.slice(0, 140) || "No text excerpt"}</p>
+                            <p className="text-sm" style={{ color: "var(--ink-secondary)" }}>{matched?.snippet || version.extractedText.slice(0, 140) || "No text excerpt"}</p>
                             <Textarea defaultValue={version.note} placeholder={"Version note..."} onBlur={(event) => void handleSaveVersionNote(version, event.target.value)} />
                           </CardContent>
                         </Card>
@@ -562,9 +562,9 @@ export function App() {
             </Card>
           </div>
         ) : (
-          <Card className="h-full border-dashed border-[#2a2a2a] bg-[#0a0a0a]">
+          <Card className="h-full border-dashed bg-white/30 backdrop-blur-md">
             <CardContent className="grid min-h-[320px] place-items-center p-6 text-center">
-              <p className="font-mono text-sm text-[#555555]">{"SELECT A PAGE"}</p>
+              <p className="font-mono text-sm" style={{ color: "var(--ink-muted)" }}>{"SELECT A PAGE"}</p>
             </CardContent>
           </Card>
         )}

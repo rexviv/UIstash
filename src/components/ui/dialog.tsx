@@ -23,7 +23,7 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out", className)}
+      className={cn("fixed inset-0 z-50 bg-[var(--canvas)]/60 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out", className)}
       {...props}
     />
   );
@@ -38,7 +38,7 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-[min(720px,calc(100vw-2rem))] translate-x-[-50%] translate-y-[-50%] gap-4 border border-[#333333] bg-[#0f0f0f] p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out",
+          "fixed left-[50%] top-[50%] z-50 grid w-[min(720px,calc(100vw-2rem))] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-[var(--radius-xl)] border border-white/40 bg-[var(--glass-bg)] p-6 backdrop-blur-2xl shadow-[var(--shadow-elevated)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out",
           className
         )}
         {...props}
@@ -46,7 +46,7 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
       >
         {children}
         {showCloseButton ? (
-          <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex size-9 items-center justify-center border border-[#2a2a2a] bg-[#181818] text-[#888888] transition-colors hover:border-[#3a3a3a] hover:text-[#e8e8e8] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff88]">
+          <DialogPrimitive.Close className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] bg-white/60 text-[var(--ink-secondary)] backdrop-blur-md transition-all hover:bg-white/80 hover:text-[var(--ink-primary)] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-glow)]">
             <X className="size-4" />
             <span className="sr-only">关闭</span>
           </DialogPrimitive.Close>
@@ -65,11 +65,11 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return <DialogPrimitive.Title className={cn("font-serif text-xl font-semibold text-[#e8e8e8]", className)} {...props} />;
+  return <DialogPrimitive.Title className={cn("text-[15px] font-semibold text-[var(--ink-primary)]", className)} {...props} />;
 }
 
 function DialogDescription({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Description>) {
-  return <DialogPrimitive.Description className={cn("text-sm leading-6 text-[#888888]", className)} {...props} />;
+  return <DialogPrimitive.Description className={cn("text-sm leading-6 text-[var(--ink-secondary)]", className)} {...props} />;
 }
 
 function hasDialogDescription(children: React.ReactNode): boolean {

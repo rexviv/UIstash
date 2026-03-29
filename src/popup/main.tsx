@@ -88,10 +88,10 @@ function PopupApp() {
   }
 
   return (
-    <main className="flex h-full w-full flex-col gap-3 overflow-hidden bg-[#080808] p-4">
-      <Card className="flex min-h-0 flex-1 flex-col overflow-hidden border-[#2a2a2a] bg-[#0f0f0f]">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-[#1a1a1a] pb-4">
-          <CardTitle className="font-serif text-[22px] tracking-tight">UIstash</CardTitle>
+    <main className="flex h-full w-full flex-col gap-3 overflow-hidden p-4" style={{ background: "var(--canvas)" }}>
+      <Card className="glass flex min-h-0 flex-1 flex-col overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-white/20 pb-4">
+          <CardTitle className="text-[18px] font-semibold tracking-tight" style={{ color: "var(--ink-primary)" }}>UIstash</CardTitle>
           <Button variant="ghost" size="icon" onClick={() => chrome.runtime.openOptionsPage()} disabled={busy} aria-label={"打开管理页"}>
             <Settings2 className="size-4" />
           </Button>
@@ -102,13 +102,13 @@ function PopupApp() {
             <Badge variant={summary?.pendingQueueCount ? "success" : "secondary"}>QUEUE: {summary?.pendingQueueCount ?? 0}</Badge>
           </div>
 
-          <Card className="border-[#1a1a1a] bg-[#0a0a0a]">
+          <Card className="bg-white/50 backdrop-blur-md">
             <CardContent className="p-4">
               <div className="mb-2 flex items-start justify-between gap-3">
-                <h2 className="font-serif text-base font-semibold leading-snug text-[#e8e8e8] line-clamp-2">{summary?.title || "当前网页"}</h2>
+                <h2 className="text-base font-semibold leading-snug line-clamp-2" style={{ color: "var(--ink-primary)" }}>{summary?.title || "当前网页"}</h2>
                 {summary?.page ? <Badge variant="success">ARCHIVED</Badge> : null}
               </div>
-              <p className="font-mono text-[11px] text-[#555555] line-clamp-2">{summary?.url || "当前标签页暂不支持保存"}</p>
+              <p className="font-mono text-[11px] line-clamp-2" style={{ color: "var(--ink-muted)" }}>{summary?.url || "当前标签页暂不支持保存"}</p>
             </CardContent>
           </Card>
 
@@ -122,7 +122,7 @@ function PopupApp() {
                 className="max-w-full"
                 onClick={() => toggleTag(tag.name)}
               >
-                <span className="size-2 shrink-0" style={{ backgroundColor: tag.color }} />
+                <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
                 <span className="truncate">{tag.name}</span>
               </Button>
             ))}
@@ -132,7 +132,7 @@ function PopupApp() {
 
           <Separator />
 
-          <Textarea value={pageNote} onChange={(event) => setPageNote(event.target.value)} placeholder={"Note..."} className="min-h-[88px] max-h-[132px] font-mono text-[13px]" />
+          <Textarea value={pageNote} onChange={(event) => setPageNote(event.target.value)} placeholder={"Note..."} className="min-h-[88px] max-h-[132px] text-[13px]" />
         </CardContent>
       </Card>
 

@@ -4,21 +4,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap border text-sm font-semibold tracking-wide transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff88] active:brightness-90",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-semibold tracking-wide transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-glow)] active:scale-[0.97]",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-[#00ff88] text-[#080808] hover:bg-[#00cc6a]",
-        secondary: "border-[#2a2a2a] bg-[#181818] text-[#e8e8e8] hover:border-[#3a3a3a] hover:bg-[#222222]",
-        ghost: "border-transparent bg-transparent text-[#888888] hover:bg-[#181818] hover:text-[#e8e8e8]",
-        outline: "border-[#00ff88] bg-[#181818] text-[#00ff88] hover:bg-[#0f2018]",
-        destructive: "border-[#ff6b35] bg-[#1a0a08] text-[#ff6b35] hover:bg-[#220e0a]"
+        default: "bg-[var(--accent)] text-white shadow-[0_2px_8px_rgba(124,106,240,0.25)] hover:bg-[var(--accent-hover)] hover:shadow-[0_4px_16px_rgba(124,106,240,0.35)] hover:-translate-y-0.5",
+        secondary: "bg-white/60 text-[var(--ink-secondary)] border border-white/40 backdrop-blur-xl shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:bg-white/80 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.97]",
+        ghost: "bg-transparent text-[var(--ink-secondary)] hover:bg-white/50 hover:text-[var(--ink-primary)] active:scale-[0.97]",
+        outline: "bg-white/50 text-[var(--ink-secondary)] border border-white/40 backdrop-blur-xl shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:bg-white/80 hover:-translate-y-0.5 active:scale-[0.97]",
+        destructive: "bg-[var(--danger-soft)] text-[var(--danger)] border border-[var(--danger)]/20 hover:bg-[var(--danger)]/20 hover:-translate-y-0.5 active:scale-[0.97]"
       },
       size: {
-        default: "h-11 px-4 py-2.5",
-        sm: "h-9 px-3 text-xs",
-        lg: "h-12 px-5 text-sm",
-        icon: "size-10"
+        default: "h-[40px] rounded-[var(--radius-md)] px-5 py-2.5",
+        sm: "h-[34px] rounded-[var(--radius-sm)] px-3.5 text-xs",
+        lg: "h-[48px] rounded-[var(--radius-lg)] px-6 text-base",
+        icon: "size-[38px] rounded-[var(--radius-md)]"
       }
     },
     defaultVariants: {

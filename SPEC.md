@@ -1,51 +1,68 @@
-# UIstash — Terminal Editorial Design Specification
+# UIstash — Frosted Glass Design Specification
 
 ## Concept & Vision
 
-A local-first web page archiving tool redesigned as a **command center for digital memory**. The aesthetic merges the precision of a Bloomberg terminal with the sophistication of high-end editorial design. The tool feels like it was built by obsessives, for obsessives — a serious instrument for people who take archiving seriously. Every pixel communicates: this is a power tool, not a consumer app.
+A local-first web page archiving tool reimagined as a **luminous digital sanctuary**. The aesthetic channels the softness of morning light through frosted glass — ethereal, inviting, and refined. Every surface catches and diffuses light gently, creating depth without harshness. This is a tool that feels like it belongs in a beautifully lit studio, not a dark server room.
 
 ---
 
-## Design Direction: "Terminal Editorial"
+## Design Direction: "Frosted Glass"
 
 ### Core Philosophy
-- **Structure is ornament** — Expose the grid, don't hide it. Visible borders and dividers are design elements.
-- **Typography as interface** — Type hierarchy carries meaning. Monospace signals data; serif signals content.
-- **Dark as default** — Deep ink blacks, not gray. High contrast for readability during long sessions.
-- **Motion is minimal and functional** — No decorative animation. Only meaningful state changes.
+- **Soft translucency** — Panels are translucent white glass with backdrop blur, letting the canvas color subtly bleed through.
+- **Violet accent as personality** — A soft violet (#7c6af0) provides warmth and distinction against the cool glass surfaces.
+- **Rounded corners throughout** — Every element has generous corner radii (6px to 28px), creating a cohesive, approachable feel.
+- **Meaningful motion** — Animations are spring-based and functional: cards lift on hover, buttons respond to touch, panels slide gracefully.
+
+### Motion Philosophy
+- **Spring-based animations** — `hover:-translate-y-0.5` lifts elements, `active:scale-[0.97]` gives tactile press feedback.
+- **150-200ms transitions** — Smooth but snappy, never sluggish.
+- **Backdrop blur reveals depth** — Glass panels at different blur levels create natural z-axis hierarchy.
+- **No decorative animation** — Motion always communicates state or provides feedback.
 
 ---
 
 ## Color System
 
-### Backgrounds
+### Canvas (Background)
 | Role | Hex | Usage |
 |------|-----|-------|
-| Base | `#080808` | Page/app background |
-| Surface | `#0f0f0f` | Cards, panels |
-| Surface Raised | `#181818` | Hover states |
-| Surface Active | `#222222` | Selected/active states |
-| Border | `#2a2a2a` | Structural borders, dividers |
-| Border Bright | `#3a3a3a` | Emphasized borders |
+| Base | `#e8e4f0` | Main app background |
+| Subtle | `#f0ecf8` | Lighter areas |
+| Deep | `#ddd8ee` | Deeper accents |
+
+### Glass Surfaces
+| Role | Value | Usage |
+|------|-------|-------|
+| Glass BG | `rgba(255, 255, 255, 0.72)` | Primary card/panel surface |
+| Glass BG Hover | `rgba(255, 255, 255, 0.85)` | Elevated hover state |
+| Glass BG Active | `rgba(255, 255, 255, 0.95)` | Active/pressed state |
+| Glass Border | `rgba(255, 255, 255, 0.5)` | Panel borders |
+| Glass Border Subtle | `rgba(255, 255, 255, 0.25)` | Subtle dividers |
 
 ### Text
 | Role | Hex | Usage |
 |------|-----|-------|
-| Primary | `#e8e8e8` | Headings, primary content |
-| Secondary | `#888888` | Labels, secondary text |
-| Muted | `#555555` | Placeholders, disabled |
-| Accent | `#00ff88` | Primary accent (phosphor green) |
-| Accent Dim | `#00cc6a` | Accent hover |
-| Warning | `#ff6b35` | Destructive, errors |
+| Primary | `#1a1625` | Headings, primary content |
+| Secondary | `#5c5470` | Body text, descriptions |
+| Muted | `#9b93b0` | Placeholders, metadata |
+| Ghost | `#c5bfd6` | Disabled, very subtle |
 
-### Accent Philosophy
-The phosphor green (#00ff88) is used SPARINGLY — only for:
-- Primary actions (Save button)
-- Active/selected indicators
-- Critical status
-- Links and interactive elements
+### Accent — Soft Violet
+| Role | Hex | Usage |
+|------|-----|-------|
+| Accent | `#7c6af0` | Primary buttons, active states |
+| Accent Hover | `#6b58e0` | Hover state |
+| Accent Soft | `rgba(124, 106, 240, 0.12)` | Subtle accent backgrounds |
+| Accent Glow | `rgba(124, 106, 240, 0.25)` | Focus rings, glows |
 
-Everything else stays monochrome to let the accent breathe.
+### Semantic
+| Role | Hex | Usage |
+|------|-----|-------|
+| Danger | `#e05c7c` | Destructive actions |
+| Danger Soft | `rgba(224, 92, 124, 0.1)` | Danger backgrounds |
+| Success | `#5cb88a` | Success states |
+| Success Soft | `rgba(92, 184, 138, 0.12)` | Success backgrounds |
 
 ---
 
@@ -53,25 +70,17 @@ Everything else stays monochrome to let the accent breathe.
 
 ### Font Stack
 - **Monospace** (data, URLs, timestamps): `"JetBrains Mono", "Fira Code", "SF Mono", monospace`
-- **Serif** (headings, titles): `"Playfair Display", "Georgia", serif`
-- **Sans-serif** (UI labels, body): `"Inter", system-ui, sans-serif`
+- **Sans-serif** (UI, body): `"Inter", system-ui, sans-serif`
 
 ### Type Scale
 | Token | Size | Weight | Usage |
 |-------|------|--------|-------|
 | `--text-2xs` | 10px | 400 | Very small metadata |
 | `--text-xs` | 11px | 400 | Labels, uppercase tags |
-| `--text-sm` | 12px | 400 | Body text, descriptions |
-| `--text-base` | 14px | 400 | Primary body |
+| `--text-sm` | 12px | 400 | Body text |
+| `--text-base` | 13px | 400 | Primary body |
 | `--text-md` | 15px | 500 | Card titles |
 | `--text-lg` | 18px | 600 | Panel headings |
-| `--text-xl` | 24px | 700 | Page titles in detail |
-
-### Typography Rules
-- **Monospace for data**: URLs, timestamps, metadata — always monospace
-- **Serif for content**: Page titles, major headings — Playfair Display or Georgia
-- **Sans-serif for UI**: Buttons, labels, navigation — Inter
-- **No decorative type** — every font choice is semantic
 
 ---
 
@@ -81,103 +90,138 @@ Everything else stays monochrome to let the accent breathe.
 
 **Default (primary)**:
 ```css
-background: #00ff88;
-color: #080808;
+background: var(--accent);
+color: white;
 border: none;
-border-radius: 0;
-padding: 10px 16px;
-font-size: 12px;
+border-radius: var(--radius-md);
+padding: 10px 20px;
+font-size: 14px;
 font-weight: 600;
-letter-spacing: 0.04em;
-text-transform: uppercase;
-transition: background 150ms;
+letter-spacing: 0.02em;
+box-shadow: 0 2px 8px rgba(124, 106, 240, 0.25);
+transition: all 200ms;
+hover: bg var(--accent-hover), shadow 0 4px 16px rgba(124, 106, 240, 0.35), translateY(-2px);
+active: scale(0.97);
 ```
 
 **Secondary**:
 ```css
-background: transparent;
-color: #888888;
-border: 1px solid #2a2a2a;
-border-radius: 0;
-// hover: border-color: #3a3a3a
+background: rgba(255, 255, 255, 0.6);
+color: var(--ink-secondary);
+border: 1px solid rgba(255, 255, 255, 0.4);
+border-radius: var(--radius-md);
+backdrop-filter: blur(20px);
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+// hover: bg rgba(255, 255, 255, 0.8), translateY(-2px)
 ```
 
 **Ghost**:
 ```css
 background: transparent;
-color: #888888;
+color: var(--ink-secondary);
 border: none;
-border-radius: 0;
-// hover: color: #e8e8e8
+border-radius: var(--radius-md);
+// hover: bg rgba(255, 255, 255, 0.5), color var(--ink-primary)
 ```
-
-**Icon button**: `32×32px`, `border-radius: 0`, no border, icon only
 
 ### Badge
 ```css
 display: inline-flex;
 align-items: center;
 gap: 6px;
-padding: 3px 8px;
-border-radius: 0;
-border: 1px solid #2a2a2a;
-background: transparent;
+padding: 3px 10px;
+border-radius: var(--radius-full);
+border: 1px solid rgba(255, 255, 255, 0.5);
+background: rgba(255, 255, 255, 0.7);
+backdrop-filter: blur(12px);
 font-size: 10px;
 font-weight: 500;
 text-transform: uppercase;
 letter-spacing: 0.06em;
-color: #888888;
+color: var(--ink-secondary);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 ```
 
 ### Card
 ```css
-border-radius: 0;
-border: 1px solid #2a2a2a;
-background: #0f0f0f;
-box-shadow: none;  /* no shadows */
+border-radius: var(--radius-lg);
+border: 1px solid rgba(255, 255, 255, 0.4);
+background: var(--glass-bg);
+backdrop-filter: blur(20px) saturate(180%);
+box-shadow: var(--shadow-glass); /* 0 4px 24px rgba(100, 80, 180, 0.08) */
 ```
 
 ### Input & Textarea
 ```css
-border-radius: 0;
-border: 1px solid #2a2a2a;
-background: #0f0f0f;
-color: #e8e8e8;
-font-family: "JetBrains Mono", monospace;
-font-size: 12px;
-padding: 10px 12px;
-transition: border-color 150ms;
-/* focus: border-color: #00ff88 */
+border-radius: var(--radius-md);
+border: 1px solid rgba(255, 255, 255, 0.4);
+background: rgba(255, 255, 255, 0.6);
+backdrop-filter: blur(20px);
+color: var(--ink-primary);
+font-size: 13px;
+padding: 10px 16px;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+transition: all 200ms;
+// focus: border-color var(--accent), shadow 0 0 0 3px var(--accent-glow)
 ```
 
 ### Dialog
 ```css
 /* Overlay */
-background: rgba(8, 8, 8, 0.85);
-backdrop-filter: blur(4px);
+background: rgba(232, 228, 240, 0.6);
+backdrop-filter: blur(12px);
 
 /* Content */
-border-radius: 0;
-border: 1px solid #2a2a2a;
-background: #0f0f0f;
-padding: 28px;
-box-shadow: none;
+border-radius: var(--radius-xl);
+border: 1px solid rgba(255, 255, 255, 0.4);
+background: var(--glass-bg);
+backdrop-filter: blur(24px) saturate(180%);
+padding: 24px;
+box-shadow: var(--shadow-elevated); /* 0 8px 32px rgba(100, 80, 180, 0.12) */
 ```
 
 ### ScrollArea
 ```css
-/* Thin, square scrollbar */
+/* Thin elegant scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f0f0f; }
-::-webkit-scrollbar-thumb { background: #333333; }
-::-webkit-scrollbar-thumb:hover { background: #444444; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 106, 240, 0.2);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 106, 240, 0.35);
+}
 ```
 
 ### Separator
 ```css
-background: #2a2a2a;
+background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
 height: 1px;
 width: 100%;
+```
+
+---
+
+## Shadow System
+
+```css
+--shadow-glass: 0 4px 24px rgba(100, 80, 180, 0.08), 0 1px 4px rgba(100, 80, 180, 0.04);
+--shadow-elevated: 0 8px 32px rgba(100, 80, 180, 0.12), 0 2px 8px rgba(100, 80, 180, 0.06);
+--shadow-float: 0 16px 48px rgba(100, 80, 180, 0.16), 0 4px 12px rgba(100, 80, 180, 0.08);
+```
+
+---
+
+## Radius System
+
+```css
+--radius-xs: 6px;
+--radius-sm: 10px;
+--radius-md: 14px;
+--radius-lg: 20px;
+--radius-xl: 28px;
+--radius-full: 9999px;
 ```
 
 ---
@@ -187,66 +231,86 @@ width: 100%;
 ### Structure
 ```
 ┌──────────────────────────────────────┐
-│ UISTASH              [⚙]             │  ← header, serif title, ghost icon
+│ UIstash                          [⚙] │  ← glass card header
 ├──────────────────────────────────────┤
-│ ● CONNECTED          12 pages          │  ← status row, dot + text
+│            QUEUE: 0                    │  ← badge top-right
 ├──────────────────────────────────────┤
-│ CURRENT PAGE                        ▼  │
-│ Page Title Here                      │  ← serif, large
-│ example.com · Mar 27, 2026          │  ← monospace, small
+│ ┌──────────────────────────────────┐ │
+│ │ Page Title Here              ✓ │ │  ← glass card, rounded
+│ │ example.com · Mar 27, 2026     │ │
+│ └──────────────────────────────────┘ │
 ├──────────────────────────────────────┤
-│ TAGS                                 │
-│ [+ tag-1] [+ tag-2] [+ tag-3]       │  ← inline chips
-│ [________________________]             │  ← input
+│ [● tag-1] [○ tag-2] [○ tag-3]       │  ← pill buttons
+│ [> new-tag________________]          │  ← glass input
 ├──────────────────────────────────────┤
-│ [________________________________]   │  ← textarea, fills space
-│ [________________________________]   │
+│ ════════════════════════════════════  │  ← gradient separator
 ├──────────────────────────────────────┤
-│ [CANCEL]           [SAVE PAGE →]     │  ← ghost + accent
+│ [Note...                          ]  │  ← glass textarea
+├──────────────────────────────────────┤
+│      [ SAVE CURRENT PAGE  ]          │  ← violet accent button
 └──────────────────────────────────────┘
 ```
 
 ### Key Design Choices
-- All corners are sharp (no border-radius anywhere)
-- Status indicator: colored dot (green=connected, amber=pending, gray=missing)
-- Page title: serif font, large, primary text color
+- All corners are rounded (14px–20px radius)
+- Glass panels with backdrop blur
+- Status indicator: badge with semantic colors
+- Page title: sans-serif, 15px, primary ink color
 - Source URL + timestamp: monospace, muted color
-- Tags: bordered chips with color dots
-- Save button: phosphor green background, dark text, uppercase
+- Tags: pill-shaped buttons with color dots
+- Save button: violet background with glow shadow, lift on hover
 
 ---
 
-## Dashboard Layout (3-column: 260px | flex | 400px)
+## Dashboard Layout (3-column: 288px | flex | 420px)
 
-### Sidebar (260px)
-- Black background `#080808`
-- UIstash title: serif font, 20px, primary text
-- Status: small dot + "CONNECTED · 12 pages" in monospace
-- Tag list: bordered rows, no rounded corners, color dots
-- Settings: ghost button at bottom
+### Sidebar (288px)
+- Glass-subtle background `rgba(255,255,255,0.45)` with `backdrop-blur(12px)`
+- UIstash title: sans-serif, 24px, bold, primary ink
+- Tag list: rounded buttons with color dots
+- Settings button at bottom
 
 ### Main Content (flex)
-- Page cards: no rounded corners, bordered, flat
-- Thumbnail: 140×100px, sharp corners, bordered
-- Typography hierarchy: serif title (content) / monospace URL + timestamp (data)
-- Selected state: border-color brightens to `#3a3a3a`
+- Page cards: glass with `backdrop-blur-xl`, lift on hover
+- Thumbnail: rounded corners, glass overlay
+- Selected state: accent border glow
+- Hover: `translateY(-2px)` with elevated shadow
 
-### Detail Panel (400px)
-- Flat structure — no nested cards, no icon circles
-- Section headers: uppercase, monospace, small, muted
-- Page title: serif, large
-- Version cards: bordered blocks with clear data hierarchy
-- All dividers: 1px `#2a2a2a` lines
+### Detail Panel (420px)
+- Glass-subtle background
+- Section cards: glass with clear hierarchy
+- Version cards: glass-subtle nested inside glass
+- All dividers: gradient separators
 
 ---
 
-## Motion Philosophy
+## Animation Tokens
 
-- **No decorative animation** — nothing moves unless it communicates state
-- **150ms transitions** for all interactive state changes
-- **No bounce, spring, or elastic** — precision over playfulness
-- **No scale or transform** effects — only color/border changes
-- **No staggered list animations** — theatrical and slow
+```css
+/* Transitions */
+--transition-fast: 150ms;
+--transition-base: 200ms;
+--transition-slow: 300ms;
+
+/* Easing */
+--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* spring overshoot */
+--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1); /* smooth out */
+
+/* Hover lift */
+.hover-lift {
+  transition: transform var(--transition-base) var(--ease-spring), box-shadow var(--transition-base);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Press feedback */
+.active-press:active {
+  transform: scale(0.97);
+  transition: transform 100ms;
+}
+```
 
 ---
 
@@ -254,15 +318,23 @@ width: 100%;
 
 ```css
 body {
-  background: #080808;
-  color: #e8e8e8;
+  background: var(--canvas);
+  color: var(--ink-primary);
   font-family: "Inter", system-ui, sans-serif;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f0f0f; }
-::-webkit-scrollbar-thumb { background: #333333; }
-::-webkit-scrollbar-thumb:hover { background: #444444; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 106, 240, 0.2);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 106, 240, 0.35);
+}
 
-::selection { background: #00ff88; color: #080808; }
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink-primary);
+}
 ```
