@@ -15,7 +15,7 @@ import type { DirectoryStatus, LibrarySnapshot, PageRecord, SearchPageResult, Ve
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardTitle } from "../components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "../components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -286,9 +286,9 @@ export function App() {
           <Dialog open={previewOpen} onOpenChange={(open) => { if (!open) { setPreviewOpen(false); setPreviewVersion(null); setPreviewUrl(null); } }}>
             <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col" showCloseButton={false}>
               <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--charcoal)]/10 shrink-0">
-                <p className="font-serif text-[14px] font-semibold text-[var(--text-primary)] truncate pr-4">
+                <DialogTitle className="font-serif text-[14px] font-semibold text-[var(--text-primary)] truncate pr-4">
                   {previewVersion ? selectedPage?.title : ""}
-                </p>
+                </DialogTitle>
                 <button
                   onClick={() => { setPreviewOpen(false); setPreviewVersion(null); setPreviewUrl(null); }}
                   className="inline-flex size-8 items-center justify-center rounded-full bg-black/5 text-[var(--text-secondary)] hover:bg-black/10 hover:text-[var(--text-primary)] transition-colors shrink-0"
@@ -296,6 +296,7 @@ export function App() {
                   <X className="size-4" />
                 </button>
               </div>
+              <DialogDescription className="sr-only">存档预览</DialogDescription>
               <div className="flex-1 overflow-y-auto bg-white">
                 {previewUrl ? (
                   <iframe src={previewUrl} className="w-full h-full min-h-[70vh] border-0" title="存档预览" />

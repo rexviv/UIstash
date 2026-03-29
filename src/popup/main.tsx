@@ -52,7 +52,11 @@ function PopupApp() {
     setBusy(true);
     try {
       const response = (await chrome.runtime.sendMessage({ type: "captureCurrentPage", tagNames: mergedTagNames, pageNote })) as { ok?: boolean; result?: { status: string }; error?: string };
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.error("[UIstash] 保存失败:", response.error);
+        alert("保存失败: " + (response.error || "未知错误"));
+        return;
+      }
       setNewTags("");
       await refresh();
     } finally { setBusy(false); }

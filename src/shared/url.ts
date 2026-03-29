@@ -9,7 +9,6 @@
 ]);
 
 const SNAPSHOT_ROOT_SEGMENT = "root";
-const SNAPSHOT_PATH_PREFIX = "seg-";
 
 export function isSupportedUrl(input: string | undefined | null): input is string {
   if (!input) {
@@ -61,7 +60,7 @@ export function sanitizePathSegment(value: string): string {
 export function buildSnapshotRelativeBase(normalizedUrl: string, capturedAt: number): string {
   const url = new URL(normalizedUrl);
 
-  return ["UIstash", encodeSnapshotHost(url.host), "__path__", ...encodeSnapshotPath(url.pathname), formatTimestampId(capturedAt)].join("/");
+  return ["UIstash", encodeSnapshotHost(url.host), ...encodeSnapshotPath(url.pathname), formatTimestampId(capturedAt)].join("/");
 }
 
 export function formatTimestampId(timestamp: number): string {
@@ -86,7 +85,7 @@ function encodeSnapshotPath(pathname: string): string[] {
     return [SNAPSHOT_ROOT_SEGMENT];
   }
 
-  return segments.map((segment) => `${SNAPSHOT_PATH_PREFIX}${encodeURIComponent(segment)}`);
+  return segments.map((segment) => encodeURIComponent(segment));
 }
 
 function pad(value: number): string {

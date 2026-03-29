@@ -467,15 +467,14 @@ async function inlineImagesToDataUrls(html: string, baseUrl: string): Promise<st
     }
   }
 
-  // Apply replacements
+  // Apply replacements using simple string replacement (no regex needed)
   let result = html;
   for (const [originalUrl, dataUrl] of replacements) {
     if (dataUrl !== originalUrl) {
-      const escapedOriginal = originalUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const escapedDataUrl = dataUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      result = result.replace(new RegExp(`src=["']${escapedOriginal}["']`, "gi"), `src="${dataUrl}"`);
-      // Also handle already-encoded URLs
-      result = result.replace(new RegExp(`src=["']${escapedDataUrl}["']`, "gi"), `src="${dataUrl}"`);
+      // Replace src attribute values with the data URL using string replacement
+      // to avoid regex escaping issues with base64 data URLs (which contain +, =, / etc.)
+      result = result.replaceAll(`src="${originalUrl}"`, `src="${dataUrl}"`);
+      result = result.replaceAll(`src='${originalUrl}'`, `src='${dataUrl}'`);
     }
   }
 
