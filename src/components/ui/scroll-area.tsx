@@ -16,15 +16,10 @@ function ScrollBar({ className, orientation = "vertical", ...props }: React.Comp
   return (
     <ScrollAreaPrimitive.ScrollAreaScrollbar
       orientation={orientation}
-      className={cn(
-        "flex touch-none select-none p-0.5 transition-all duration-200",
-        orientation === "vertical" && "h-full w-2 border-l border-l-transparent",
-        orientation === "horizontal" && "h-2 flex-col border-t border-t-transparent",
-        className
-      )}
+      className={cn("flex touch-none select-none p-0.5 transition-colors", orientation === "vertical" && "h-full w-2 border-l border-l-transparent", orientation === "horizontal" && "h-2 flex-col border-t border-t-transparent", className)}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-[var(--accent)]/20 transition-colors hover:bg-[var(--accent)]/35" />
+      <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-black/15 hover:bg-black/25 transition-colors" />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   );
 }
