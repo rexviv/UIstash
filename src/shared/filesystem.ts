@@ -64,7 +64,7 @@ export async function writeSnapshotFiles(request: SnapshotWriteRequest): Promise
 
   await writeFile(baseDir, "preview.png", await dataUrlToBlob(request.pngDataUrl));
   await writeFile(baseDir, "full-page.png", await dataUrlToBlob(request.fullPagePngDataUrl));
-  await writeFile(baseDir, "page.html", dataUrlToBlob(request.archiveHtmlDataUrl));
+  await writeFile(baseDir, "page.html", await dataUrlToBlob(request.archiveHtmlDataUrl));
   await writeFile(baseDir, "meta.json", new Blob([JSON.stringify(buildMeta(request, pngPath, fullPngPath, htmlPath), null, 2)], { type: "application/json" }));
 
   return { pngPath, fullPngPath, htmlPath, metaPath };
