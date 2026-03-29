@@ -1,7 +1,7 @@
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
-  Archive, ExternalLink, FolderOpen, Globe, ImageIcon, RefreshCw,
-  Search, Settings2, Trash2, FileText, GalleryVerticalEnd, MoreHorizontal, Plus
+  Archive, ExternalLink, Eye, FolderOpen, Globe, ImageIcon, RefreshCw,
+  Search, Settings2, Trash2, FileText, GalleryVerticalEnd, MoreHorizontal, Plus, X
 } from "lucide-react";
 import { db } from "../shared/db";
 import {
@@ -37,6 +37,9 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState<VersionRecord | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => { void reloadLibrary(); }, []);
@@ -55,6 +58,22 @@ export function App() {
   );
 
   useEffect(() => { setPageNoteDraft(selectedPage?.note ?? ""); }, [selectedPage?.id, selectedPage?.note]);
+
+  useEffect(() => {
+    if (!previewVersion) { setPreviewUrl(null); return; }
+    let revoked = false;
+    let currentUrl: string | null = null;
+    async function load() {
+      try {
+        const file = await readSnapshotFile(previewVersion.fullPngPath);
+        currentUrl = URL.createObjectURL(file);
+        if (!revoked) { setPreviewUrl(currentUrl); }
+        else { URL.revokeObjectURL(currentUrl); }
+      } catch { if (!revoked) { setPreviewUrl(null); } }
+    }
+    void load();
+    return () => { revoked = true; if (currentUrl) { URL.revokeObjectURL(currentUrl); } };
+  }, [previewVersion]);
 
   useEffect(() => {
     let revoked = false;
@@ -246,6 +265,36 @@ export function App() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* 存档预览弹窗 */}
+          <Dialog open={previewOpen} onOpenChange={(open) => { if (!open) { setPreviewOpen(false); setPreviewVersion(null); setPreviewUrl(null); } }}>
+            <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col" showCloseButton={false}>
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--charcoal)]/10 shrink-0">
+                <p className="font-serif text-[14px] font-semibold text-[var(--text-primary)] truncate pr-4">
+                  {previewVersion ? selectedPage?.title : ""}
+                </p>
+                <button
+                  onClick={() => { setPreviewOpen(false); setPreviewVersion(null); setPreviewUrl(null); }}
+                  className="inline-flex size-8 items-center justify-center rounded-full bg-black/5 text-[var(--text-secondary)] hover:bg-black/10 hover:text-[var(--text-primary)] transition-colors shrink-0"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto bg-[var(--bg-canvas)]">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="" className="w-full h-auto block" />
+                ) : previewVersion ? (
+                  <div className="flex items-center justify-center h-64">
+                    <RefreshCw className="size-8 animate-spin text-[var(--text-muted)]" />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <ImageIcon className="size-12 text-[var(--text-muted)]" />
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 
@@ -286,6 +335,13 @@ export function App() {
                       <div className="title-slide absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 via-black/20 to-transparent p-3">
                         <p className="text-[12px] font-medium leading-tight text-white line-clamp-2">{result.page.title}</p>
                         <p className="mt-1 text-[10px] text-white/70">{safeHost(result.page.latestUrl)}</p>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); if (latestVersion) { setPreviewVersion(latestVersion); setPreviewOpen(true); } }}
+                          className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+                        >
+                          <Eye className="size-3.5" />
+                        </button>
                       </div>
                     </div>
                     {/* 标签圆点 */}

@@ -1,9 +1,8 @@
 import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Archive, ExternalLink, Globe, Plus, Settings2 } from "lucide-react";
+import { Archive, Globe, Settings2 } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { scanLibrarySnapshot } from "../shared/filesystem";
@@ -80,26 +79,15 @@ function PopupApp() {
       </div>
 
       {/* 主内容 */}
-      <div className="flex flex-1 flex-col overflow-hidden p-4 gap-4">
-        {/* 截图预览区 */}
-        <Card className="relative overflow-hidden shrink-0" style={{ aspectRatio: "16/9" }}>
-          {summary?.page ? (
-            <>
-              <div className="absolute inset-0 flex items-center justify-center bg-[var(--bg-canvas)]">
-                <Globe className="size-10 opacity-20" style={{ color: "var(--text-muted)" }} />
-              </div>
-              <Badge variant="success" className="absolute top-3 left-3">已存档</Badge>
-            </>
-          ) : (
-            <div className="flex size-full flex-col items-center justify-center gap-2 bg-[var(--bg-canvas)]">
-              <Globe className="size-10 opacity-15" style={{ color: "var(--text-muted)" }} />
-              <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>当前页面</p>
-            </div>
-          )}
-        </Card>
-
+      <div className="flex flex-1 flex-col overflow-y-auto p-4 gap-4">
         {/* 页面信息 */}
         <div className="shrink-0">
+          <div className="flex items-center gap-2 mb-1">
+            {summary?.page && <Badge variant="success" className="text-[10px]">已存档</Badge>}
+            {summary?.pendingQueueCount !== undefined && summary.pendingQueueCount > 0 && (
+              <Badge variant="default" className="text-[10px]">{summary.pendingQueueCount} 待处理</Badge>
+            )}
+          </div>
           <h2 className="font-serif text-[15px] font-semibold leading-snug line-clamp-2" style={{ color: "var(--text-primary)" }}>
             {summary?.title || "当前网页"}
           </h2>
@@ -129,8 +117,8 @@ function PopupApp() {
         </div>
 
         {/* 备注 */}
-        <div className="flex-1 overflow-hidden">
-          <Textarea value={pageNote} onChange={(e) => setPageNote(e.target.value)} placeholder={"添加备注..."} className="h-full min-h-[72px] text-[13px]" />
+        <div className="flex-1 min-h-0">
+          <Textarea value={pageNote} onChange={(e) => setPageNote(e.target.value)} placeholder={"添加备注..."} className="w-full min-h-[88px] text-[13px]" />
         </div>
 
         {/* 保存按钮 */}
