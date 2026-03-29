@@ -65,8 +65,8 @@ export function App() {
     let currentUrl: string | null = null;
     async function load() {
       try {
-        const file = await readSnapshotFile(previewVersion.fullPngPath);
-        currentUrl = URL.createObjectURL(file);
+        const file = await readSnapshotFile(previewVersion.mhtmlPath);
+        currentUrl = URL.createObjectURL(new Blob([file], { type: "multipart/related" }));
         if (!revoked) { setPreviewUrl(currentUrl); }
         else { URL.revokeObjectURL(currentUrl); }
       } catch { if (!revoked) { setPreviewUrl(null); } }
@@ -116,7 +116,7 @@ export function App() {
     const permission = await ensureDirectoryPermission(false);
     if (permission !== "granted") { setDirectoryStatus(permission); setStatusMessage("需要重新授权目录"); return; }
     try {
-      const file = await readSnapshotFile(latestVersion.fullPngPath);
+      const file = await readSnapshotFile(latestVersion.mhtmlPath);
       const url = URL.createObjectURL(file);
       await chrome.tabs.create({ url });
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -280,9 +280,9 @@ export function App() {
                   <X className="size-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto bg-[var(--bg-canvas)]">
+              <div className="flex-1 overflow-y-auto bg-white">
                 {previewUrl ? (
-                  <img src={previewUrl} alt="" className="w-full h-auto block" />
+                  <iframe src={previewUrl} className="w-full h-full min-h-[70vh] border-0" title="MHTML preview" />
                 ) : previewVersion ? (
                   <div className="flex items-center justify-center h-64">
                     <RefreshCw className="size-8 animate-spin text-[var(--text-muted)]" />
@@ -361,31 +361,17 @@ export function App() {
         {/* 侧边抽屉 */}
         {selectedPage && (
           <aside className="drawer-enter w-[420px] shrink-0 overflow-y-auto border-l border-[var(--charcoal)]/10" style={{ background: "var(--bg-canvas)" }}>
-            {/* 全尺寸截图预览 */}
-            <div className="relative">
-              {(() => {
-                const latestVersion = library.versions.filter((v) => v.pageId === selectedPage.id).sort((a, b) => b.capturedAt - a.capturedAt)[0];
-                const fullUrl = latestVersion ? thumbnailUrls[selectedPage.id + "_full"] : null;
-                return fullUrl ? (
-                  <img src={fullUrl} alt="" className="size-full object-contain" style={{ maxHeight: "340px" }} />
-                ) : (
-                  <div className="flex h-[240px] items-center justify-center bg-[var(--bg-canvas)]">
-                    <ImageIcon className="size-12 opacity-20" style={{ color: "var(--text-muted)" }} />
-                  </div>
-                );
-              })()}
-              {/* 渐变遮罩 */}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[var(--bg-canvas)] via-transparent to-transparent" />
-              {/* 打开按钮 */}
-              <Button onClick={() => void handleOpenPageInNewTab(selectedPage)} className="absolute right-3 top-3 gap-1.5" size="sm" variant="secondary">
-                <ExternalLink className="size-3.5" />在新标签页查看
-              </Button>
-            </div>
-
             {/* 页面信息 */}
             <div className="px-5 pt-4">
               <h2 className="font-serif text-[20px] font-bold leading-snug" style={{ color: "var(--text-primary)" }}>{selectedPage.title}</h2>
               <p className="mt-1 font-mono text-[11px]" style={{ color: "var(--text-muted)" }}>{safeHost(selectedPage.latestUrl)} · {formatTime(selectedPage.capturedAt)}</p>
+            </div>
+
+            {/* 打开 MHTML 按钮 */}
+            <div className="px-5 pt-3">
+              <Button onClick={() => void handleOpenPageInNewTab(selectedPage)} className="w-full gap-2" variant="secondary">
+                <ExternalLink className="size-4" />在新标签页查看存档网页
+              </Button>
             </div>
 
             <div className="px-5 py-4 space-y-4">

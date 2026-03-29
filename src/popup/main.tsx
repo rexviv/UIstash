@@ -79,7 +79,7 @@ function PopupApp() {
       </div>
 
       {/* 主内容 */}
-      <div className="flex flex-1 flex-col overflow-y-auto p-4 gap-4">
+      <div className="flex flex-1 flex-col overflow-y-auto px-4 py-3 gap-3">
         {/* 页面信息 */}
         <div className="shrink-0">
           <div className="flex items-center gap-2 mb-1">
@@ -98,8 +98,8 @@ function PopupApp() {
 
         {/* 标签 */}
         <div className="shrink-0">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>标签</p>
-          <div className="mb-2 flex flex-wrap gap-1.5">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>标签</p>
+          <div className="mb-1.5 flex flex-wrap gap-1.5">
             {availableTags.map((tag) => {
               const isSelected = selectedTags.includes(tag.name);
               return (
@@ -118,11 +118,11 @@ function PopupApp() {
 
         {/* 备注 */}
         <div className="flex-1 min-h-0">
-          <Textarea value={pageNote} onChange={(e) => setPageNote(e.target.value)} placeholder={"添加备注..."} className="w-full min-h-[88px] text-[13px]" />
+          <Textarea value={pageNote} onChange={(e) => setPageNote(e.target.value)} placeholder={"添加备注..."} className="w-full min-h-[72px] text-[13px]" />
         </div>
 
         {/* 保存按钮 */}
-        <Button onClick={handleSave} disabled={saveDisabled} className="shrink-0 h-12 text-[13px] gap-2">
+        <Button onClick={handleSave} disabled={saveDisabled} className="shrink-0 h-11 text-[13px] gap-2">
           <Archive className="size-4" />
           {summary?.isSupported ? "存档" : "此页面不支持存档"}
         </Button>
